@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: inherit; }
+    a { color: oklch(55% 0.16 55); }
+    a:hover { color: oklch(48% 0.16 55); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes shakeX { 10%, 90% { transform: translateX(-3px); } 20%, 80% { transform: translateX(5px); } 30%, 50%, 70% { transform: translateX(-9px); } 40%, 60% { transform: translateX(9px); } }
+    @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  </style>
+</helmet>
+<div style="min-height: 100vh; width: 100%; background: oklch(97% 0.012 75); font-family: 'Inter', sans-serif; color: #2B2F33; display: flex; flex-direction: column; align-items: center; position: relative;">
+
+  <sc-if value="{{isLogin}}" hint-placeholder-val="{{true}}">
+    <div data-screen-label="Connexion" style="width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 0 20px 40px;">
+      <div style="padding: 56px 4px 28px; text-align: center;">
+        <div style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 2px; color: oklch(60% 0.02 75);">AMTARC</div>
+        <div style="font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 28px; margin-top: 6px;">L'ardoise du club</div>
+      </div>
+
+      <sc-if value="{{loginPickStep}}" hint-placeholder-val="{{true}}">
+        <div style="background: #fff; border-radius: 20px; padding: 22px; box-shadow: 0 1px 3px rgba(43,47,51,.06), 0 12px 28px rgba(43,47,51,.08);">
+          <div style="font-weight: 600; font-size: 15px; margin-bottom: 14px; color: oklch(45% 0.01 75);">Qui êtes-vous ?</div>
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <sc-for list="{{loginRows}}" as="row" hint-placeholder-count="6">
+              <button onClick="{{row.onClick}}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 10px; border: none; background: transparent; border-radius: 12px; cursor: pointer; text-align: left;" style-hover="background: oklch(96% 0.01 75);">
+                <div style="width: 42px; height: 42px; border-radius: 50%; background: {{row.avatarColor}}; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; color: #2B2F33; flex-shrink: 0;">{{row.initials}}</div>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-weight: 600; font-size: 15px;">{{row.name}}</div>
+                </div>
+                <sc-if value="{{row.isAdminRow}}" hint-placeholder-val="{{false}}">
+                  <div style="font-size: 11px; font-weight: 600; color: oklch(50% 0.16 55); background: oklch(94% 0.05 60); padding: 4px 9px; border-radius: 20px; flex-shrink: 0;">Responsable</div>
+                </sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{loginPinStep}}" hint-placeholder-val="{{false}}">
+        <div style="background: #fff; border-radius: 20px; padding: 28px 22px; box-shadow: 0 1px 3px rgba(43,47,51,.06), 0 12px 28px rgba(43,47,51,.08); display: flex; flex-direction: column; align-items: center;">
+          <button onClick="{{backToPickAction}}" style="align-self: flex-start; border: none; background: transparent; color: oklch(55% 0.01 75); font-size: 14px; font-weight: 600; cursor: pointer; padding: 0 0 18px;">← Retour</button>
+          <div style="width: 60px; height: 60px; border-radius: 50%; background: {{pendingMember.avatarColor}}; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 20px; margin-bottom: 10px;">{{pendingMember.initials}}</div>
+          <div style="font-weight: 600; font-size: 17px; margin-bottom: 22px;">{{pendingMember.name}}</div>
+          <div style="font-size: 13px; color: oklch(50% 0.01 75); margin-bottom: 14px;">Entrez votre code à 4 chiffres</div>
+          <div style="display: flex; gap: 14px; margin-bottom: 26px; animation: {{pinShakeAnim}};">
+            <sc-for list="{{pinDots}}" as="dot" hint-placeholder-count="4">
+              <div style="width: 14px; height: 14px; border-radius: 50%; background: {{dot.color}}; transition: background .15s;"></div>
+            </sc-for>
+          </div>
+          <sc-if value="{{hasPinError}}" hint-placeholder-val="{{false}}">
+            <div style="color: oklch(55% 0.18 25); font-size: 13px; font-weight: 600; margin-bottom: 16px; margin-top: -10px;">{{pinError}}</div>
+          </sc-if>
+          <div style="display: grid; grid-template-columns: repeat(3, 64px); gap: 12px;">
+            <sc-for list="{{pinDigits}}" as="d" hint-placeholder-count="9">
+              <button onClick="{{d.onClick}}" style="width: 64px; height: 64px; border-radius: 50%; border: 1px solid oklch(92% 0.01 75); background: #fff; font-size: 22px; font-weight: 600; cursor: pointer; color: #2B2F33;" style-hover="background: oklch(96% 0.01 75);" style-active="background: oklch(92% 0.01 75);">{{d.label}}</button>
+            </sc-for>
+            <div></div>
+            <button onClick="{{zeroAction}}" style="width: 64px; height: 64px; border-radius: 50%; border: 1px solid oklch(92% 0.01 75); background: #fff; font-size: 22px; font-weight: 600; cursor: pointer; color: #2B2F33;" style-hover="background: oklch(96% 0.01 75);">0</button>
+            <button onClick="{{backspaceAction}}" style="width: 64px; height: 64px; border-radius: 50%; border: none; background: transparent; font-size: 18px; cursor: pointer; color: oklch(55% 0.01 75);">⌫</button>
+          </div>
+          <div style="font-size: 12px; color: oklch(62% 0.01 75); margin-top: 24px;">Démo : code 1234</div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isApp}}" hint-placeholder-val="{{false}}">
+
+    <sc-if value="{{showMemberUi}}" hint-placeholder-val="{{false}}">
+      <div data-screen-label="Mon ardoise" style="width: 100%; max-width: 460px; padding: 0 20px 100px; display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 24px 2px 18px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 38px; height: 38px; border-radius: 50%; background: {{selfAvatarColor}}; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px;">{{selfInitials}}</div>
+            <div>
+              <div style="font-weight: 600; font-size: 15px;">{{selfName}}</div>
+              <div style="font-size: 12px; color: oklch(55% 0.01 75);">{{selfLicence}}</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <sc-if value="{{isCurrentAdmin}}" hint-placeholder-val="{{false}}">
+              <button onClick="{{toggleViewAction}}" style="border: none; background: oklch(93% 0.01 75); color: #2B2F33; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 20px; cursor: pointer;" style-hover="background: oklch(90% 0.01 75);">Vue caisse</button>
+            </sc-if>
+            <button onClick="{{logoutAction}}" style="border: none; background: transparent; color: oklch(55% 0.01 75); font-size: 12px; font-weight: 600; cursor: pointer; padding: 9px 6px;">Déconnexion</button>
+          </div>
+        </div>
+
+        <div style="background: #fff; border-radius: 20px; padding: 26px 22px; box-shadow: 0 1px 3px rgba(43,47,51,.06), 0 12px 28px rgba(43,47,51,.08); text-align: center;">
+          <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); text-transform: uppercase; letter-spacing: .5px;">{{selfBalanceStatusText}}</div>
+          <div style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 44px; margin-top: 8px; color: {{selfBalanceColor}};">{{selfBalanceLabel}}</div>
+          <div style="margin-top: 20px; height: 8px; border-radius: 6px; background: oklch(93% 0.01 75); overflow: hidden;">
+            <div style="height: 100%; border-radius: 6px; background: {{selfBalanceColor}}; width: {{selfCapPercentLabel}};"></div>
+          </div>
+          <div style="font-size: 12px; color: oklch(55% 0.01 75); margin-top: 10px;">{{selfCapLabel}}</div>
+        </div>
+
+        <sc-if value="{{selfOverCap}}" hint-placeholder-val="{{false}}">
+          <div style="background: oklch(95% 0.04 25); color: oklch(42% 0.16 25); border-radius: 14px; padding: 14px 16px; margin-top: 14px; font-size: 13px; font-weight: 500; line-height: 1.5;">{{selfAlertText}}</div>
+        </sc-if>
+
+        <div style="margin-top: 30px; font-weight: 600; font-size: 15px; padding: 0 2px;">Historique</div>
+        <sc-if value="{{selfHasTransactions}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+            <sc-for list="{{selfTransactions}}" as="t" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; justify-content: space-between; background: #fff; border-radius: 14px; padding: 14px 16px;">
+                <div>
+                  <div style="font-size: 14px; font-weight: 500;">{{t.note}}</div>
+                  <div style="font-size: 12px; color: oklch(55% 0.01 75); margin-top: 2px;">{{t.dateLabel}}</div>
+                </div>
+                <div style="font-weight: 600; font-size: 15px; color: {{t.amountColor}};">{{t.amountLabel}}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{selfNoTransactions}}" hint-placeholder-val="{{false}}">
+          <div style="text-align: center; color: oklch(60% 0.01 75); font-size: 13px; padding: 30px 0;">Aucune transaction pour l'instant.</div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showAdminUi}}" hint-placeholder-val="{{false}}">
+      <div style="width: 100%; max-width: 760px; padding: 0 20px 100px; display: flex; flex-direction: column; position: relative;">
+
+        <sc-if value="{{isDashboardScreen}}" hint-placeholder-val="{{true}}">
+          <div data-screen-label="Tableau de bord" style="display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 24px 2px 18px;">
+              <div>
+                <div style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 2px; color: oklch(60% 0.02 75);">AMTARC</div>
+                <div style="font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 22px; margin-top: 2px;">Caisse du club</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button onClick="{{toggleViewAction}}" style="border: none; background: oklch(93% 0.01 75); color: #2B2F33; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 20px; cursor: pointer;" style-hover="background: oklch(90% 0.01 75);">Mon ardoise</button>
+                <button onClick="{{openSettingsAction}}" style="border: none; background: transparent; font-size: 12px; font-weight: 600; cursor: pointer; padding: 9px 6px; color: oklch(50% 0.01 75);">Réglages</button>
+                <button onClick="{{logoutAction}}" style="border: none; background: transparent; font-size: 12px; font-weight: 600; cursor: pointer; padding: 9px 6px; color: oklch(50% 0.01 75);">Déconnexion</button>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 18px;">
+              <div style="flex: 1; background: #fff; border-radius: 16px; padding: 16px 18px;">
+                <div style="font-size: 12px; color: oklch(55% 0.01 75); font-weight: 600;">Total dû</div>
+                <div style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 22px; margin-top: 4px;">{{totalDueLabel}}</div>
+              </div>
+              <div style="flex: 1; background: #fff; border-radius: 16px; padding: 16px 18px;">
+                <div style="font-size: 12px; color: oklch(55% 0.01 75); font-weight: 600;">Au-dessus du plafond</div>
+                <div style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 22px; margin-top: 4px; color: {{alertCountColor}};">{{alertCountLabel}}</div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+              <input value="{{search}}" onChange="{{onSearchChange}}" placeholder="Rechercher un membre…" style="flex: 1; border: 1px solid oklch(90% 0.01 75); background: #fff; border-radius: 12px; padding: 11px 14px; font-size: 14px; color: #2B2F33;" />
+              <button onClick="{{openAddMemberAction}}" style="border: none; background: #2B2F33; color: #fff; font-weight: 600; font-size: 13px; padding: 0 16px; border-radius: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: oklch(30% 0.01 260);">+ Membre</button>
+            </div>
+
+            <sc-if value="{{hasMemberRows}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <sc-for list="{{memberRows}}" as="row" hint-placeholder-count="6">
+                  <button onClick="{{row.onClick}}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: none; background: #fff; border-radius: 14px; cursor: pointer; text-align: left;" style-hover="background: oklch(97% 0.01 75);">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: {{row.avatarColor}}; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0;">{{row.initials}}</div>
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="font-weight: 600; font-size: 14px;">{{row.name}}</div>
+                      <div style="font-size: 12px; color: oklch(55% 0.01 75); margin-top: 1px;">{{row.licenceLabel}}</div>
+                    </div>
+                    <div style="font-weight: 600; font-size: 15px; color: {{row.balanceColor}};">{{row.balanceLabel}}</div>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{noMemberRows}}" hint-placeholder-val="{{false}}">
+              <div style="text-align: center; color: oklch(60% 0.01 75); font-size: 13px; padding: 30px 0;">Aucun membre trouvé.</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isDetailScreen}}" hint-placeholder-val="{{false}}">
+          <div data-screen-label="Détail membre" style="display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 24px 2px 18px;">
+              <button onClick="{{backToDashboardAction}}" style="border: none; background: transparent; color: oklch(50% 0.01 75); font-size: 20px; cursor: pointer; padding: 4px;">←</button>
+              <div style="flex: 1; font-weight: 600; font-size: 17px;">{{detailMember.name}}</div>
+              <button onClick="{{editMemberAction}}" style="border: none; background: oklch(93% 0.01 75); font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 20px; cursor: pointer;">Modifier</button>
+            </div>
+
+            <div style="background: #fff; border-radius: 20px; padding: 22px; margin-bottom: 14px;">
+              <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 18px;">
+                <div style="width: 52px; height: 52px; border-radius: 50%; background: {{detailMember.avatarColor}}; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; flex-shrink: 0;">{{detailMember.initials}}</div>
+                <div>
+                  <div style="font-size: 13px; color: oklch(55% 0.01 75);">{{detailMember.licenceLabel}}</div>
+                  <div style="font-size: 13px; color: oklch(55% 0.01 75); margin-top: 2px;">{{detailMember.emailLabel}}</div>
+                  <div style="font-size: 13px; color: oklch(55% 0.01 75); margin-top: 2px;">{{detailMember.phoneLabel}}</div>
+                </div>
+              </div>
+              <div style="text-align: center; padding-top: 14px; border-top: 1px solid oklch(95% 0.01 75);">
+                <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); text-transform: uppercase; letter-spacing: .5px;">Solde</div>
+                <div style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 34px; margin-top: 6px; color: {{detailMember.balanceColor}};">{{detailMember.balanceLabel}}</div>
+                <div style="font-size: 12px; color: oklch(55% 0.01 75); margin-top: 6px;">{{detailMember.capLabel}}</div>
+              </div>
+            </div>
+
+            <sc-if value="{{detailOverCap}}" hint-placeholder-val="{{false}}">
+              <div style="background: oklch(95% 0.04 25); color: oklch(42% 0.16 25); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; font-size: 13px; font-weight: 500;">{{detailAlertText}}</div>
+            </sc-if>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+              <button onClick="{{addExpenseAction}}" style="border: none; background: oklch(58% 0.16 25); color: #fff; font-weight: 600; font-size: 13px; padding: 13px; border-radius: 12px; cursor: pointer;" style-hover="opacity: .9;">+ Ajouter une dépense</button>
+              <button onClick="{{addPaymentAction}}" style="border: none; background: oklch(58% 0.14 145); color: #fff; font-weight: 600; font-size: 13px; padding: 13px; border-radius: 12px; cursor: pointer;" style-hover="opacity: .9;">✓ Enregistrer un paiement</button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+              <button onClick="{{sendReminderAction}}" style="flex: 1; border: 1px solid oklch(88% 0.01 75); background: #fff; color: #2B2F33; font-weight: 600; font-size: 13px; padding: 11px; border-radius: 12px; cursor: pointer;">Envoyer un rappel</button>
+              <button onClick="{{deleteMemberAction}}" style="border: 1px solid oklch(90% 0.06 25); background: #fff; color: oklch(48% 0.16 25); font-weight: 600; font-size: 13px; padding: 11px 16px; border-radius: 12px; cursor: pointer;">Supprimer</button>
+            </div>
+
+            <div style="font-weight: 600; font-size: 15px; padding: 0 2px; margin-bottom: 10px;">Historique</div>
+            <sc-if value="{{detailHasTransactions}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <sc-for list="{{detailTransactions}}" as="t" hint-placeholder-count="4">
+                  <div style="display: flex; align-items: center; justify-content: space-between; background: #fff; border-radius: 14px; padding: 14px 16px;">
+                    <div>
+                      <div style="font-size: 14px; font-weight: 500;">{{t.note}}</div>
+                      <div style="font-size: 12px; color: oklch(55% 0.01 75); margin-top: 2px;">{{t.dateLabel}}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div style="font-weight: 600; font-size: 15px; color: {{t.amountColor}};">{{t.amountLabel}}</div>
+                      <button onClick="{{t.deleteAction}}" style="border: none; background: transparent; color: oklch(70% 0.01 75); font-size: 16px; cursor: pointer;">✕</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{detailNoTransactions}}" hint-placeholder-val="{{false}}">
+              <div style="text-align: center; color: oklch(60% 0.01 75); font-size: 13px; padding: 30px 0;">Aucune transaction pour ce membre.</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isSettingsScreen}}" hint-placeholder-val="{{false}}">
+          <div data-screen-label="Réglages" style="display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 24px 2px 18px;">
+              <button onClick="{{backToDashboardAction}}" style="border: none; background: transparent; color: oklch(50% 0.01 75); font-size: 20px; cursor: pointer; padding: 4px;">←</button>
+              <div style="font-weight: 600; font-size: 17px;">Réglages</div>
+            </div>
+
+            <div style="background: #fff; border-radius: 18px; padding: 20px; margin-bottom: 16px;">
+              <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Plafond par défaut</div>
+              <div style="font-size: 12px; color: oklch(55% 0.01 75); margin-bottom: 12px;">Alerte déclenchée quand un nouveau membre dépasse ce montant.</div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input value="{{defaultCapValue}}" onChange="{{onDefaultCapChange}}" style="width: 100px; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 9px 12px; font-size: 14px;" />
+                <span style="font-size: 14px; color: oklch(55% 0.01 75);">€</span>
+              </div>
+            </div>
+
+            <div style="background: #fff; border-radius: 18px; padding: 20px; margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <div style="font-weight: 600; font-size: 14px;">Responsables de caisse</div>
+                <button onClick="{{addAdminAction}}" style="border: none; background: oklch(93% 0.01 75); font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 20px; cursor: pointer;">+ Ajouter</button>
+              </div>
+              <sc-for list="{{adminAccountsRows}}" as="a" hint-placeholder-count="2">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
+                  <div style="width: 34px; height: 34px; border-radius: 50%; background: {{a.avatarColor}}; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px;">{{a.initials}}</div>
+                  <div style="font-size: 14px; font-weight: 500;">{{a.name}}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="background: #fff; border-radius: 18px; padding: 20px;">
+              <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Export</div>
+              <div style="font-size: 12px; color: oklch(55% 0.01 75); margin-bottom: 14px;">Imprimer ou exporter en PDF le grand livre des comptes.</div>
+              <button onClick="{{printAction}}" style="border: none; background: #2B2F33; color: #fff; font-weight: 600; font-size: 13px; padding: 11px 18px; border-radius: 12px; cursor: pointer;">Imprimer / exporter</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isDashboardScreen}}" hint-placeholder-val="{{true}}">
+          <button onClick="{{openQuickTxnFab}}" style="position: fixed; bottom: 28px; right: max(20px, calc((100% - 760px) / 2 + 20px)); width: 56px; height: 56px; border-radius: 50%; background: oklch(68% 0.15 55); border: none; color: #fff; font-size: 26px; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,.2); display: flex; align-items: center; justify-content: center;" style-hover="background: oklch(63% 0.15 55);">+</button>
+        </sc-if>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{showQuickTxn}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{closeQuickTxnAction}}" style="position: fixed; inset: 0; background: rgba(43,47,51,.42); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; animation: fadeIn .15s ease;">
+      <div onClick="{{stopPropagation}}" style="background: #fff; border-radius: 20px; padding: 26px; width: 100%; max-width: 400px; animation: modalIn .18s ease;">
+        <div style="font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 18px; margin-bottom: 18px;">Nouvelle transaction</div>
+
+        <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">Membre</div>
+        <select value="{{txnMemberId}}" onChange="{{onTxnMemberChange}}" style="width: 100%; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 11px 12px; font-size: 14px; margin-bottom: 16px; background: #fff;">
+          <option value="">Choisir un membre…</option>
+          <sc-for list="{{allMemberOptions}}" as="opt" hint-placeholder-count="6">
+            <option value="{{opt.id}}">{{opt.name}}</option>
+          </sc-for>
+        </select>
+
+        <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">Type</div>
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <button onClick="{{kindDebitAction}}" style="flex: 1; border: 1px solid {{debitBorder}}; background: {{debitBg}}; color: {{debitColor}}; font-weight: 600; font-size: 13px; padding: 11px; border-radius: 10px; cursor: pointer;">Dépense</button>
+          <button onClick="{{kindCreditAction}}" style="flex: 1; border: 1px solid {{creditBorder}}; background: {{creditBg}}; color: {{creditColor}}; font-weight: 600; font-size: 13px; padding: 11px; border-radius: 10px; cursor: pointer;">Paiement</button>
+        </div>
+
+        <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">Montant (€)</div>
+        <input value="{{txnAmount}}" onChange="{{onTxnAmountChange}}" placeholder="0,00" style="width: 100%; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 11px 12px; font-size: 14px; margin-bottom: 16px;" />
+
+        <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">Note (optionnel)</div>
+        <input value="{{txnNote}}" onChange="{{onTxnNoteChange}}" placeholder="Bières, eau…" style="width: 100%; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 11px 12px; font-size: 14px; margin-bottom: 22px;" />
+
+        <div style="display: flex; gap: 10px;">
+          <button onClick="{{closeQuickTxnAction}}" style="flex: 1; border: 1px solid oklch(90% 0.01 75); background: #fff; color: #2B2F33; font-weight: 600; font-size: 14px; padding: 12px; border-radius: 12px; cursor: pointer;">Annuler</button>
+          <button onClick="{{submitTxnAction}}" style="flex: 1; border: none; background: #2B2F33; color: #fff; font-weight: 600; font-size: 14px; padding: 12px; border-radius: 12px; cursor: pointer;">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showMemberModal}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{closeMemberModalAction}}" style="position: fixed; inset: 0; background: rgba(43,47,51,.42); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; overflow: auto;">
+      <div onClick="{{stopPropagation}}" style="background: #fff; border-radius: 20px; padding: 26px; width: 100%; max-width: 420px; animation: modalIn .18s ease; max-height: 88vh; overflow: auto;">
+        <div style="font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 18px; margin-bottom: 18px;">{{memberModalTitle}}</div>
+
+        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+          <div onClick="{{triggerPhotoUpload}}" style="width: 76px; height: 76px; border-radius: 50%; background-image: {{mfPhotoStyle}}; background-size: cover; background-position: center; background-color: {{mfAvatarColor}}; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 22px; cursor: pointer; color: #2B2F33; border: 2px dashed oklch(85% 0.01 75);">{{mfInitialsDisplay}}</div>
+          <input ref="{{photoInputRef}}" type="file" accept="image/*" onChange="{{onPhotoChange}}" style="display: none;" />
+          <button onClick="{{triggerPhotoUpload}}" style="border: none; background: transparent; color: oklch(50% 0.16 55); font-size: 12px; font-weight: 600; margin-top: 8px; cursor: pointer;">Changer la photo</button>
+        </div>
+
+        <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">Nom complet</div>
+        <input value="{{mfName}}" onChange="{{onMfNameChange}}" placeholder="Prénom Nom" style="width: 100%; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 11px 12px; font-size: 14px; margin-bottom: 14px;" />
+
+        <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+          <div style="flex: 1;">
+            <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">N° licence</div>
+            <input value="{{mfLicence}}" onChange="{{onMfLicenceChange}}" placeholder="AM1234" style="width: 100%; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 11px 12px; font-size: 14px;" />
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">Plafond (€)</div>
+            <input value="{{mfCap}}" onChange="{{onMfCapChange}}" style="width: 100%; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 11px 12px; font-size: 14px;" />
+          </div>
+        </div>
+
+        <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">Email</div>
+        <input value="{{mfEmail}}" onChange="{{onMfEmailChange}}" placeholder="email@exemple.fr" style="width: 100%; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 11px 12px; font-size: 14px; margin-bottom: 14px;" />
+
+        <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">Téléphone</div>
+        <input value="{{mfPhone}}" onChange="{{onMfPhoneChange}}" placeholder="06 00 00 00 00" style="width: 100%; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 11px 12px; font-size: 14px; margin-bottom: 14px;" />
+
+        <div style="display: flex; align-items: center; justify-content: space-between; background: oklch(97% 0.01 75); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;">
+          <div style="font-size: 13px; font-weight: 600;">Responsable de caisse</div>
+          <button onClick="{{toggleAdminAction}}" style="width: 44px; height: 26px; border-radius: 14px; border: none; background: {{mfAdminToggleBg}}; cursor: pointer; position: relative;">
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: #fff; position: absolute; top: 3px; left: {{mfAdminToggleLeft}}; transition: left .15s;"></div>
+          </button>
+        </div>
+
+        <div style="font-size: 12px; font-weight: 600; color: oklch(55% 0.01 75); margin-bottom: 6px;">Code PIN (4 chiffres)</div>
+        <input value="{{mfPin}}" onChange="{{onMfPinChange}}" style="width: 100%; border: 1px solid oklch(90% 0.01 75); border-radius: 10px; padding: 11px 12px; font-size: 14px; margin-bottom: 22px;" />
+
+        <div style="display: flex; gap: 10px;">
+          <button onClick="{{closeMemberModalAction}}" style="flex: 1; border: 1px solid oklch(90% 0.01 75); background: #fff; color: #2B2F33; font-weight: 600; font-size: 14px; padding: 12px; border-radius: 12px; cursor: pointer;">Annuler</button>
+          <button onClick="{{saveMemberAction}}" style="flex: 1; border: none; background: #2B2F33; color: #fff; font-weight: 600; font-size: 14px; padding: 12px; border-radius: 12px; cursor: pointer;">Enregistrer</button>
+        </div>
+        <sc-if value="{{isEditingMember}}" hint-placeholder-val="{{false}}">
+          <button onClick="{{deleteMemberFromModalAction}}" style="width: 100%; border: none; background: transparent; color: oklch(48% 0.16 25); font-weight: 600; font-size: 13px; padding: 14px 0 0; cursor: pointer;">Supprimer ce membre</button>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showConfirm}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{cancelConfirmAction}}" style="position: fixed; inset: 0; background: rgba(43,47,51,.42); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 60;">
+      <div onClick="{{stopPropagation}}" style="background: #fff; border-radius: 18px; padding: 24px; width: 100%; max-width: 340px; text-align: center; animation: modalIn .18s ease;">
+        <div style="font-size: 15px; font-weight: 500; line-height: 1.5; margin-bottom: 22px;">{{confirmMessage}}</div>
+        <div style="display: flex; gap: 10px;">
+          <button onClick="{{cancelConfirmAction}}" style="flex: 1; border: 1px solid oklch(90% 0.01 75); background: #fff; color: #2B2F33; font-weight: 600; font-size: 14px; padding: 11px; border-radius: 12px; cursor: pointer;">Annuler</button>
+          <button onClick="{{confirmYesAction}}" style="flex: 1; border: none; background: oklch(52% 0.18 25); color: #fff; font-weight: 600; font-size: 14px; padding: 11px; border-radius: 12px; cursor: pointer;">Confirmer</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showToastBool}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #2B2F33; color: #fff; font-size: 13px; font-weight: 500; padding: 12px 20px; border-radius: 30px; box-shadow: 0 8px 20px rgba(0,0,0,.2); z-index: 70; animation: toastIn .2s ease; white-space: nowrap;">{{toastMessage}}</div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.photoInputRef = React.createRef();
+    this._toastTimer = null;
+    this.state = {
+      screen: 'login',
+      loginStep: 'pick',
+      pendingMemberId: null,
+      pin: '',
+      pinError: '',
+      currentUserId: null,
+      viewAs: 'admin',
+      adminScreen: 'dashboard',
+      detailMemberId: null,
+      search: '',
+      showQuickTxn: false,
+      showMemberModal: false,
+      confirmAction: null,
+      toast: null,
+      txnForm: { memberId: '', kind: 'debit', amount: '', note: '' },
+      memberForm: { id: null, name: '', licence: '', email: '', phone: '', photo: null, isAdmin: false, cap: '25', pin: '1234' },
+      defaultCap: 25,
+      members: this.loadMembers(),
+    };
+  }
+
+  loadMembers() {
+    try {
+      const raw = localStorage.getItem('amtarc_ardoise_demo_v1');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return this.defaultMembers();
+  }
+
+  persist(members) {
+    try { localStorage.setItem('amtarc_ardoise_demo_v1', JSON.stringify(members)); } catch (e) {}
+  }
+
+  pickAvatarColor(i) {
+    const palette = ['#E8C9A0', '#C9DAC8', '#CBD5E3', '#E3C9CE', '#D9CBB3'];
+    return palette[i % palette.length];
+  }
+
+  initialsOf(name) {
+    return (name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  defaultMembers() {
+    const raw = [
+      { id: 'm1', name: 'Bernard Lefèvre', licence: 'AM1042', email: 'bernard.lefevre@amtarc.fr', phone: '06 12 34 56 78', isAdmin: true, cap: 30, pin: '1234', photo: null, transactions: [
+        { id: 't1', kind: 'debit', amount: 8, note: 'Bières', date: '2026-07-15' },
+        { id: 't2', kind: 'credit', amount: 8, note: 'Règlement espèces', date: '2026-07-16' },
+      ]},
+      { id: 'm2', name: 'Nathalie Petit', licence: 'AM1077', email: 'nathalie.petit@amtarc.fr', phone: '06 23 45 67 89', isAdmin: true, cap: 30, pin: '1234', photo: null, transactions: [
+        { id: 't3', kind: 'debit', amount: 5, note: 'Eau + café', date: '2026-08-02' },
+      ]},
+      { id: 'm3', name: 'Julien Marchand', licence: 'AM2210', email: 'julien.marchand@mail.fr', phone: '06 34 56 78 90', isAdmin: false, cap: 25, pin: '1234', photo: null, transactions: [
+        { id: 't4', kind: 'debit', amount: 12, note: 'Bières x2', date: '2026-07-10' },
+        { id: 't5', kind: 'debit', amount: 9, note: 'Sandwich + soda', date: '2026-07-24' },
+      ]},
+      { id: 'm4', name: 'Sophie Dubois', licence: 'AM2287', email: 'sophie.dubois@mail.fr', phone: '06 45 67 89 01', isAdmin: false, cap: 25, pin: '1234', photo: null, transactions: [
+        { id: 't6', kind: 'debit', amount: 6, note: 'Eau gazeuse', date: '2026-08-05' },
+      ]},
+      { id: 'm5', name: 'Karim Haddad', licence: 'AM2299', email: 'karim.haddad@mail.fr', phone: '06 56 78 90 12', isAdmin: false, cap: 20, pin: '1234', photo: null, transactions: [
+        { id: 't7', kind: 'debit', amount: 15, note: 'Bières', date: '2026-07-01' },
+        { id: 't8', kind: 'debit', amount: 14, note: 'Repas + boissons', date: '2026-08-01' },
+      ]},
+      { id: 'm6', name: 'Émilie Rousseau', licence: 'AM2305', email: 'emilie.rousseau@mail.fr', phone: '06 67 89 01 23', isAdmin: false, cap: 25, pin: '1234', photo: null, transactions: [
+        { id: 't9', kind: 'debit', amount: 10, note: 'Boissons', date: '2026-06-20' },
+        { id: 't10', kind: 'credit', amount: 10, note: 'Règlement espèces', date: '2026-06-25' },
+      ]},
+      { id: 'm7', name: 'Thomas Girard', licence: 'AM2318', email: 'thomas.girard@mail.fr', phone: '06 78 90 12 34', isAdmin: false, cap: 25, pin: '1234', photo: null, transactions: [
+        { id: 't11', kind: 'debit', amount: 18, note: 'Tournée équipe', date: '2026-08-08' },
+      ]},
+      { id: 'm8', name: 'Léa Fontaine', licence: 'AM2340', email: 'lea.fontaine@mail.fr', phone: '06 89 01 23 45', isAdmin: false, cap: 25, pin: '1234', photo: null, transactions: [] },
+      { id: 'm9', name: 'Marc Bellamy', licence: 'AM2355', email: 'marc.bellamy@mail.fr', phone: '06 90 12 34 56', isAdmin: false, cap: 25, pin: '1234', photo: null, transactions: [
+        { id: 't12', kind: 'debit', amount: 30, note: 'Anniversaire du club', date: '2026-07-28' },
+        { id: 't13', kind: 'credit', amount: 4, note: 'Acompte espèces', date: '2026-08-03' },
+      ]},
+    ];
+    return raw.map((m, i) => ({ ...m, initials: this.initialsOf(m.name), avatarColor: this.pickAvatarColor(i) }));
+  }
+
+  formatMoney(n) {
+    const v = Math.round((n || 0) * 100) / 100;
+    return v.toFixed(2).replace('.', ',') + ' €';
+  }
+
+  formatDate(iso) {
+    try {
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (e) { return iso; }
+  }
+
+  balanceOf(member) {
+    return (member.transactions || []).reduce((s, t) => s + (t.kind === 'debit' ? t.amount : t.kind === 'credit' ? -t.amount : 0), 0);
+  }
+
+  balanceInfo(balance) {
+    if (balance > 0.001) return { label: this.formatMoney(balance), color: 'oklch(52% 0.18 25)', status: 'À régler' };
+    if (balance < -0.001) return { label: 'Avoir ' + this.formatMoney(Math.abs(balance)), color: 'oklch(52% 0.14 210)', status: 'Avoir en votre faveur' };
+    return { label: '0,00 €', color: 'oklch(58% 0.14 145)', status: 'Compte à jour' };
+  }
+
+  transactionDisplay(t, memberId) {
+    let amountLabel = '', amountColor = 'oklch(60% 0.01 75)', note = t.note;
+    if (t.kind === 'debit') { amountLabel = '+' + this.formatMoney(t.amount); amountColor = 'oklch(50% 0.14 40)'; }
+    else if (t.kind === 'credit') { amountLabel = '−' + this.formatMoney(t.amount); amountColor = 'oklch(55% 0.14 145)'; }
+    else { amountLabel = ''; note = note || 'Rappel envoyé'; }
+    return { id: t.id, dateLabel: this.formatDate(t.date), note, amountLabel, amountColor, deleteAction: () => this.askDeleteTxn(memberId, t.id) };
+  }
+
+  showToast(message) {
+    this.setState({ toast: { message } });
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => this.setState({ toast: null }), 2600);
+  }
+
+  selectLoginMember(id) { this.setState({ pendingMemberId: id, loginStep: 'pin', pin: '', pinError: '' }); }
+  backToPick() { this.setState({ loginStep: 'pick', pin: '', pinError: '', pendingMemberId: null }); }
+
+  pressDigit(d) {
+    if (this.state.pin.length >= 4) return;
+    const pin = this.state.pin + d;
+    this.setState({ pin, pinError: '' });
+    if (pin.length === 4) {
+      const member = this.state.members.find(m => m.id === this.state.pendingMemberId);
+      setTimeout(() => {
+        if (member && member.pin === pin) {
+          this.setState({ screen: 'app', currentUserId: member.id, viewAs: member.isAdmin ? 'admin' : 'self', adminScreen: 'dashboard', pin: '' });
+        } else {
+          this.setState({ pinError: 'Code incorrect, réessayez.', pin: '' });
+        }
+      }, 150);
+    }
+  }
+  pressBackspace() { this.setState(s => ({ pin: s.pin.slice(0, -1), pinError: '' })); }
+  logout() { this.setState({ screen: 'login', loginStep: 'pick', pendingMemberId: null, currentUserId: null, pin: '', adminScreen: 'dashboard' }); }
+  setViewAs(v) { this.setState({ viewAs: v, adminScreen: 'dashboard' }); }
+  setAdminScreen(s) { this.setState({ adminScreen: s }); }
+  openMemberDetail(id) { this.setState({ adminScreen: 'detail', detailMemberId: id }); }
+  setSearch(v) { this.setState({ search: v }); }
+
+  openQuickTxn(memberId, kind) {
+    this.setState({ showQuickTxn: true, txnForm: { memberId: memberId || '', kind: kind || 'debit', amount: '', note: '' } });
+  }
+  closeQuickTxn() { this.setState({ showQuickTxn: false }); }
+  updateTxnForm(field, value) { this.setState(s => ({ txnForm: { ...s.txnForm, [field]: value } })); }
+  setTxnKind(kind) { this.updateTxnForm('kind', kind); }
+
+  submitTxn() {
+    const { memberId, kind, amount, note } = this.state.txnForm;
+    const amt = parseFloat(String(amount).replace(',', '.'));
+    if (!memberId || !amt || amt <= 0) { this.showToast('Vérifiez le membre et le montant.'); return; }
+    const members = this.state.members.map(m => m.id === memberId ? { ...m, transactions: [...m.transactions, { id: 't' + Date.now(), kind, amount: amt, note: note || (kind === 'debit' ? 'Achat' : 'Règlement espèces'), date: new Date().toISOString().slice(0, 10) }] } : m);
+    this.persist(members);
+    this.setState({ members, showQuickTxn: false });
+    this.showToast(kind === 'debit' ? 'Dépense ajoutée.' : 'Paiement enregistré.');
+  }
+
+  sendReminder(memberId) {
+    const members = this.state.members.map(m => m.id === memberId ? { ...m, transactions: [...m.transactions, { id: 't' + Date.now(), kind: 'reminder', amount: 0, note: 'Rappel envoyé', date: new Date().toISOString().slice(0, 10) }] } : m);
+    this.persist(members);
+    this.setState({ members });
+    this.showToast('Rappel envoyé au membre.');
+  }
+
+  askDeleteTxn(memberId, txnId) { this.setState({ confirmAction: { type: 'deleteTxn', memberId, txnId } }); }
+  askDeleteMember(memberId) { this.setState({ confirmAction: { type: 'deleteMember', memberId } }); }
+  cancelConfirm() { this.setState({ confirmAction: null }); }
+
+  confirmYes() {
+    const a = this.state.confirmAction;
+    if (!a) return;
+    if (a.type === 'deleteTxn') {
+      const members = this.state.members.map(m => m.id === a.memberId ? { ...m, transactions: m.transactions.filter(t => t.id !== a.txnId) } : m);
+      this.persist(members);
+      this.setState({ members, confirmAction: null });
+      this.showToast('Transaction supprimée.');
+    } else if (a.type === 'deleteMember') {
+      const members = this.state.members.filter(m => m.id !== a.memberId);
+      this.persist(members);
+      this.setState({ members, confirmAction: null, adminScreen: 'dashboard', detailMemberId: null, showMemberModal: false });
+      this.showToast('Membre supprimé.');
+    }
+  }
+
+  openAddMember() {
+    this.setState({ showMemberModal: true, memberForm: { id: null, name: '', licence: '', email: '', phone: '', photo: null, isAdmin: false, cap: String(this.state.defaultCap), pin: '1234' } });
+  }
+  openAddAdmin() {
+    this.setState({ showMemberModal: true, memberForm: { id: null, name: '', licence: '', email: '', phone: '', photo: null, isAdmin: true, cap: String(this.state.defaultCap), pin: '1234' } });
+  }
+  openEditMember(id) {
+    const m = this.state.members.find(x => x.id === id);
+    if (!m) return;
+    this.setState({ showMemberModal: true, memberForm: { id: m.id, name: m.name, licence: m.licence, email: m.email, phone: m.phone, photo: m.photo, isAdmin: m.isAdmin, cap: String(m.cap), pin: m.pin } });
+  }
+  closeMemberModal() { this.setState({ showMemberModal: false }); }
+  updateMemberForm(field, value) { this.setState(s => ({ memberForm: { ...s.memberForm, [field]: value } })); }
+
+  handlePhotoUpload(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => this.updateMemberForm('photo', reader.result);
+    reader.readAsDataURL(file);
+  }
+
+  saveMember() {
+    const f = this.state.memberForm;
+    if (!f.name.trim()) { this.showToast('Le nom est obligatoire.'); return; }
+    const cap = parseFloat(String(f.cap).replace(',', '.')) || this.state.defaultCap;
+    let members;
+    if (f.id) {
+      members = this.state.members.map(m => m.id === f.id ? { ...m, name: f.name.trim(), licence: f.licence, email: f.email, phone: f.phone, photo: f.photo, isAdmin: f.isAdmin, cap, pin: f.pin, initials: this.initialsOf(f.name) } : m);
+    } else {
+      const id = 'm' + Date.now();
+      members = [...this.state.members, { id, name: f.name.trim(), licence: f.licence, email: f.email, phone: f.phone, photo: f.photo, isAdmin: f.isAdmin, cap, pin: f.pin || '1234', initials: this.initialsOf(f.name), avatarColor: this.pickAvatarColor(this.state.members.length), transactions: [] }];
+    }
+    this.persist(members);
+    this.setState({ members, showMemberModal: false });
+    this.showToast(f.id ? 'Membre modifié.' : 'Membre ajouté.');
+  }
+
+  renderVals() {
+    const s = this.state;
+    const members = s.members;
+    const isLogin = s.screen === 'login';
+    const isApp = s.screen === 'app';
+    const current = members.find(m => m.id === s.currentUserId) || null;
+    const isCurrentAdmin = current ? current.isAdmin : false;
+    const showAdminUi = isApp && isCurrentAdmin && s.viewAs === 'admin';
+    const showMemberUi = isApp && (!isCurrentAdmin || s.viewAs === 'self');
+
+    const pending = members.find(m => m.id === s.pendingMemberId) || { name: '', initials: '', avatarColor: '#eee' };
+    const pinDots = [0, 1, 2, 3].map(i => ({ color: i < s.pin.length ? '#2B2F33' : 'oklch(90% 0.01 75)' }));
+    const pinDigits = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => ({ label: d, onClick: () => this.pressDigit(d) }));
+
+    let selfVals = {};
+    const cur = current || { name: '', initials: '', avatarColor: '#eee', licence: '', email: '', phone: '', cap: 25, transactions: [], isAdmin: false, id: null };
+    {
+      const balance = this.balanceOf(cur);
+      const info = this.balanceInfo(balance);
+      const percent = cur.cap > 0 ? Math.min(100, Math.max(0, Math.round((balance / cur.cap) * 100))) : 0;
+      const txns = (cur.transactions || []).slice().sort((a, b) => b.date.localeCompare(a.date)).map(t => this.transactionDisplay(t, cur.id));
+      selfVals = {
+        selfAvatarColor: cur.avatarColor, selfInitials: cur.initials, selfName: cur.name,
+        selfLicence: cur.licence ? ('Licence ' + cur.licence) : '',
+        selfBalanceStatusText: info.status, selfBalanceLabel: info.label, selfBalanceColor: info.color,
+        selfCapPercentLabel: percent + '%', selfCapLabel: 'Plafond du club : ' + this.formatMoney(cur.cap),
+        selfOverCap: balance > cur.cap,
+        selfAlertText: 'Vous avez dépassé le plafond du club (' + this.formatMoney(cur.cap) + '). Merci de régler auprès du responsable de caisse dès que possible.',
+        selfTransactions: txns, selfHasTransactions: txns.length > 0, selfNoTransactions: txns.length === 0,
+      };
+    }
+
+    const search = (s.search || '').trim().toLowerCase();
+    const memberRows = members
+      .map(m => ({ m, balance: this.balanceOf(m) }))
+      .filter(({ m }) => !search || m.name.toLowerCase().includes(search) || (m.licence || '').toLowerCase().includes(search))
+      .sort((a, b) => b.balance - a.balance)
+      .map(({ m, balance }) => {
+        const info = this.balanceInfo(balance);
+        return { id: m.id, name: m.name, initials: m.initials, avatarColor: m.avatarColor, licenceLabel: m.licence ? ('Licence ' + m.licence) : '—', balanceLabel: info.label, balanceColor: info.color, onClick: () => this.openMemberDetail(m.id) };
+      });
+    const totalDue = members.reduce((sum, m) => sum + Math.max(0, this.balanceOf(m)), 0);
+    const alertCount = members.filter(m => this.balanceOf(m) > m.cap).length;
+
+    const dmSrc = members.find(m => m.id === s.detailMemberId) || { name: '', initials: '', avatarColor: '#eee', licence: '', email: '', phone: '', cap: 25, transactions: [] };
+    const dmBalance = this.balanceOf(dmSrc);
+    const dmInfo = this.balanceInfo(dmBalance);
+    const detailMember = {
+      name: dmSrc.name, avatarColor: dmSrc.avatarColor, initials: dmSrc.initials,
+      licenceLabel: dmSrc.licence ? ('Licence ' + dmSrc.licence) : 'Licence —',
+      emailLabel: dmSrc.email || '—', phoneLabel: dmSrc.phone || '—',
+      balanceColor: dmInfo.color, balanceLabel: dmInfo.label, capLabel: 'Plafond : ' + this.formatMoney(dmSrc.cap),
+    };
+    const detailTxns = (dmSrc.transactions || []).slice().sort((a, b) => b.date.localeCompare(a.date)).map(t => this.transactionDisplay(t, dmSrc.id));
+
+    const adminAccountsRows = members.filter(m => m.isAdmin).map(m => ({ name: m.name, initials: m.initials, avatarColor: m.avatarColor }));
+    const allMemberOptions = members.slice().sort((a, b) => a.name.localeCompare(b.name)).map(m => ({ id: m.id, name: m.name }));
+
+    const kindIsDebit = s.txnForm.kind === 'debit';
+    const f = s.memberForm;
+
+    return {
+      isLogin, isApp, showAdminUi, showMemberUi, isCurrentAdmin,
+      loginPickStep: s.loginStep === 'pick', loginPinStep: s.loginStep === 'pin',
+      loginRows: members.map(m => ({ id: m.id, name: m.name, initials: m.initials, avatarColor: m.avatarColor, isAdminRow: m.isAdmin, onClick: () => this.selectLoginMember(m.id) })),
+      pendingMember: pending, pinShakeAnim: s.pinError ? 'shakeX .35s ease' : 'none',
+      pinDots, hasPinError: !!s.pinError, pinError: s.pinError,
+      pinDigits, zeroAction: () => this.pressDigit('0'), backspaceAction: () => this.pressBackspace(), backToPickAction: () => this.backToPick(),
+
+      toggleViewAction: () => this.setViewAs(s.viewAs === 'admin' ? 'self' : 'admin'),
+      logoutAction: () => this.logout(),
+      ...selfVals,
+
+      isDashboardScreen: s.adminScreen === 'dashboard', isDetailScreen: s.adminScreen === 'detail', isSettingsScreen: s.adminScreen === 'settings',
+      openSettingsAction: () => this.setAdminScreen('settings'),
+      totalDueLabel: this.formatMoney(totalDue),
+      alertCountLabel: String(alertCount), alertCountColor: alertCount > 0 ? 'oklch(52% 0.18 25)' : '#2B2F33',
+      search: s.search, onSearchChange: (e) => this.setSearch(e.target.value),
+      openAddMemberAction: () => this.openAddMember(),
+      hasMemberRows: memberRows.length > 0, noMemberRows: memberRows.length === 0, memberRows,
+
+      backToDashboardAction: () => this.setAdminScreen('dashboard'),
+      detailMember, detailOverCap: dmBalance > dmSrc.cap,
+      detailAlertText: 'Ce membre a dépassé son plafond de ' + this.formatMoney(dmSrc.cap) + '.',
+      editMemberAction: () => this.openEditMember(s.detailMemberId),
+      addExpenseAction: () => this.openQuickTxn(s.detailMemberId, 'debit'),
+      addPaymentAction: () => this.openQuickTxn(s.detailMemberId, 'credit'),
+      sendReminderAction: () => this.sendReminder(s.detailMemberId),
+      deleteMemberAction: () => this.askDeleteMember(s.detailMemberId),
+      detailTransactions: detailTxns, detailHasTransactions: detailTxns.length > 0, detailNoTransactions: detailTxns.length === 0,
+
+      defaultCapValue: String(s.defaultCap), onDefaultCapChange: (e) => this.setState({ defaultCap: parseFloat(String(e.target.value).replace(',', '.')) || 0 }),
+      adminAccountsRows, addAdminAction: () => this.openAddAdmin(),
+      printAction: () => window.print(),
+      openQuickTxnFab: () => this.openQuickTxn(null, 'debit'),
+
+      showQuickTxn: s.showQuickTxn, closeQuickTxnAction: () => this.closeQuickTxn(), stopPropagation: (e) => e.stopPropagation(),
+      txnMemberId: s.txnForm.memberId, onTxnMemberChange: (e) => this.updateTxnForm('memberId', e.target.value),
+      allMemberOptions,
+      kindDebitAction: () => this.setTxnKind('debit'), kindCreditAction: () => this.setTxnKind('credit'),
+      debitBorder: kindIsDebit ? 'oklch(58% 0.16 25)' : 'oklch(90% 0.01 75)', debitBg: kindIsDebit ? 'oklch(96% 0.05 25)' : '#fff', debitColor: kindIsDebit ? 'oklch(45% 0.16 25)' : '#2B2F33',
+      creditBorder: !kindIsDebit ? 'oklch(58% 0.14 145)' : 'oklch(90% 0.01 75)', creditBg: !kindIsDebit ? 'oklch(95% 0.05 145)' : '#fff', creditColor: !kindIsDebit ? 'oklch(40% 0.14 145)' : '#2B2F33',
+      txnAmount: s.txnForm.amount, onTxnAmountChange: (e) => this.updateTxnForm('amount', e.target.value),
+      txnNote: s.txnForm.note, onTxnNoteChange: (e) => this.updateTxnForm('note', e.target.value),
+      submitTxnAction: () => this.submitTxn(),
+
+      showMemberModal: s.showMemberModal, closeMemberModalAction: () => this.closeMemberModal(),
+      memberModalTitle: f.id ? 'Modifier le membre' : 'Nouveau membre', isEditingMember: !!f.id,
+      mfPhotoStyle: f.photo ? ('url(' + f.photo + ')') : 'none', mfAvatarColor: f.photo ? 'transparent' : (this.pickAvatarColor(f.name ? f.name.length : 0)),
+      mfInitialsDisplay: f.photo ? '' : this.initialsOf(f.name),
+      triggerPhotoUpload: () => { if (this.photoInputRef.current) this.photoInputRef.current.click(); },
+      photoInputRef: this.photoInputRef, onPhotoChange: (e) => this.handlePhotoUpload(e.target.files && e.target.files[0]),
+      mfName: f.name, onMfNameChange: (e) => this.updateMemberForm('name', e.target.value),
+      mfLicence: f.licence, onMfLicenceChange: (e) => this.updateMemberForm('licence', e.target.value),
+      mfCap: f.cap, onMfCapChange: (e) => this.updateMemberForm('cap', e.target.value),
+      mfEmail: f.email, onMfEmailChange: (e) => this.updateMemberForm('email', e.target.value),
+      mfPhone: f.phone, onMfPhoneChange: (e) => this.updateMemberForm('phone', e.target.value),
+      mfAdminToggleBg: f.isAdmin ? 'oklch(65% 0.15 55)' : 'oklch(88% 0.01 75)', mfAdminToggleLeft: f.isAdmin ? '21px' : '3px',
+      toggleAdminAction: () => this.updateMemberForm('isAdmin', !f.isAdmin),
+      mfPin: f.pin, onMfPinChange: (e) => this.updateMemberForm('pin', e.target.value),
+      saveMemberAction: () => this.saveMember(),
+      deleteMemberFromModalAction: () => { this.setState({ showMemberModal: false }); this.askDeleteMember(f.id); },
+
+      showConfirm: !!s.confirmAction,
+      confirmMessage: s.confirmAction ? (s.confirmAction.type === 'deleteTxn' ? 'Supprimer cette transaction ?' : 'Supprimer définitivement ce membre et tout son historique ?') : '',
+      cancelConfirmAction: () => this.cancelConfirm(), confirmYesAction: () => this.confirmYes(),
+
+      showToastBool: !!s.toast, toastMessage: s.toast ? s.toast.message : '',
+    };
+  }
+}
+</script>
+</body>
+</html>
