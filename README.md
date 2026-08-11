@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ardoise AMTARC
 
-## Getting Started
+Web app that replaces the paper notebook behind the bar of the AMTARC club: members check what
+they owe, till managers record purchases and payments.
 
-First, run the development server:
+<!-- Refresh this once the member view lands: it should show a balance, not the login list. -->
+
+![The login screen on a phone: the club wordmark above a card listing members, each with initials
+and a "Responsable" badge for till managers](docs/screenshot.png)
+
+> **Interface language:** the UI is French — the club's members are French speakers. The
+> codebase, comments and documentation are English.
+
+## What it does
+
+**For a member**
+
+- See their own balance: owed, settled, or in credit.
+- See how close they are to their spending cap, and get a banner when they go over it.
+- Read their own history. Nothing else, and nobody else's.
+
+**For a till manager**
+
+- Dashboard: total owed, how many members are over their cap, searchable member list sorted by
+  balance.
+- Record an expense or a payment in a couple of taps, with configurable quick-price buttons
+  ("Bière 3 €", "Café 1 €").
+- Manage member records: create, edit, set a per-member cap, promote to till manager.
+- Send a reminder, logged in the member's history.
+- Print the ledger or export it as CSV.
+- Every till action is attributed to a named manager and written to an audit log.
+
+## Stack
+
+| Layer    | Choice                                                     |
+| -------- | ---------------------------------------------------------- |
+| App      | Next.js 16 (App Router), TypeScript, React 19              |
+| Styling  | Tailwind CSS v4, design tokens from the handoff            |
+| Database | PostgreSQL + Drizzle ORM, SQL migrations in `drizzle/`     |
+| Auth     | PIN hashed with Argon2id, database sessions, rate limiting |
+| Tests    | Vitest (business logic), Playwright (end-to-end)           |
+
+Structural decisions are recorded in [`docs/adr/`](docs/adr/) — notably
+[why money is stored as integer cents](docs/adr/0002-money-as-integer-cents.md) and
+[why nothing is ever hard-deleted](docs/adr/0005-void-and-archive-never-delete.md).
+
+## Getting started
+
+Requirements: Node 20+, pnpm, Docker (for the local database).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env.local        # then fill in the two secrets
+docker compose up -d              # Postgres on port 5433
+pnpm db:migrate                   # create the schema
+pnpm db:seed                      # nine demo members from the design handoff
+pnpm dev                          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Generate the two secrets with `openssl rand -base64 32`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> `PIN_PEPPER` is load-bearing: it is mixed into every PIN before hashing and never reaches the
+> database. Changing or losing it invalidates every existing PIN.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The seed prints the demo codes it created. They are development-only — the seed refuses to run
+with `NODE_ENV=production`.
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Command              | What it does                              |
+| -------------------- | ----------------------------------------- |
+| `pnpm dev`           | Development server                        |
+| `pnpm build`         | Production build                          |
+| `pnpm test`          | Unit tests                                |
+| `pnpm test:coverage` | Unit tests with coverage                  |
+| `pnpm typecheck`     | TypeScript, no emit                       |
+| `pnpm lint`          | ESLint                                    |
+| `pnpm format`        | Prettier, write                           |
+| `pnpm db:generate`   | Generate a migration from the schema      |
+| `pnpm db:migrate`    | Apply pending migrations                  |
+| `pnpm db:seed`       | Reset and reseed the development database |
+| `pnpm db:studio`     | Browse the database                       |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Architecture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+  db/          schema, connection, seed
+  lib/         business logic — money, balance, auth, sessions, rate limiting
+  app/         routes (French URLs, matching the UI language)
+  components/  UI components
+  styles/      design tokens
+  proxy.ts     optimistic cookie check (was middleware.ts before Next 16)
+```
 
-## Deploy on Vercel
+Two rules the codebase depends on:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Money is always integer cents.** `src/lib/money.ts` is the only place allowed to convert
+   to or from a decimal representation.
+2. **Every server page and Server Action starts with an authorisation guard** from
+   `src/lib/auth.ts`. Access control never rests on what the interface shows or hides.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Business logic in `src/lib/balance.ts` and `src/lib/money.ts` imports no framework code, so it
+is directly unit-testable and survives a change of stack.
+
+## Roadmap
+
+- [x] Foundations: Next.js, Tailwind, design tokens from the handoff
+- [x] Database: schema, migrations, integrity constraints, demo seed
+- [x] Business logic: money and balance rules, covered by unit tests
+- [x] Authentication: Argon2id PINs, sessions, progressive lockout, access guards
+- [x] Login screen: member list and PIN keypad
+- [ ] Member view: balance, cap gauge, history
+- [ ] Till view: dashboard, member detail, transaction and member modals
+- [ ] Settings: default cap, quick-price tariffs, till managers
+- [ ] Ledger: printable page and CSV export
+- [ ] Finishing: PWA, large-text toggle, accessibility pass, Playwright suite
+- [ ] Deployment: managed Postgres in the EU, first admin bootstrap script
+
+## Design reference
+
+`design_handoff_ardoise_amtarc/` holds the original brief and an interactive prototype. The
+prototype has no backend — it is the visual and behavioural reference, not code to copy. It is
+kept in the repository so the app can be compared against it screen by screen over time.
