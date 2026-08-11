@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+
+    # The balance rules are the part of this app that must not break, so the
+    # test job runs against a real Postgres rather than a mocked one.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ardoise
+          POSTGRES_PASSWORD: ardoise
+          POSTGRES_DB: ardoise_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ardoise -d ardoise_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://ardoise:ardoise@localhost:5432/ardoise_test
+      # CI-only values. Real secrets live in the hosting environment.
+      IP_HASH_SECRET: ci-only-ip-hash-secret-value-32-bytes
+      PIN_PEPPER: ci-only-pin-pepper-value-at-least-32b
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Apply migrations
+        run: pnpm db:migrate
+
+      - name: Test with coverage
+        run: pnpm test:coverage
+
+      - name: Build
+        run: pnpm build

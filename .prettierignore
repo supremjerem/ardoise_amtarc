@@ -1,0 +1,5 @@
+.next/
+node_modules/
+pnpm-lock.yaml
+drizzle/
+design_handoff_ardoise_amtarc/

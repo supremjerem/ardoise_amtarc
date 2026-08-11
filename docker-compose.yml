@@ -1,0 +1,24 @@
+# Local development database.
+#   docker compose up -d
+# Production runs a managed Postgres — same engine, same schema.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ardoise-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ardoise
+      POSTGRES_PASSWORD: ardoise
+      POSTGRES_DB: ardoise
+    ports:
+      - "5433:5432" # 5433 so it does not clash with a Postgres already installed on the host
+    volumes:
+      - ardoise_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ardoise -d ardoise"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ardoise_pgdata:
