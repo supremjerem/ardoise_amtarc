@@ -1,0 +1,150 @@
+/*
+ * Design tokens — Ardoise AMTARC
+ *
+ * Source of truth: design_handoff_ardoise_amtarc/README.md ("Design Tokens"
+ * section) and the literal values in design_reference.html.
+ *
+ * Every size is in rem: the large-text toggle scales the whole interface by
+ * changing the <html> font-size (see globals.css).
+ */
+
+@theme {
+  /* ---- Background and text colours ---- */
+  --color-canvas: oklch(97% 0.012 75); /* app background, warm white */
+  --color-surface: #ffffff; /* cards */
+  --color-ink: #2b2f33; /* primary text (graphite) */
+  --color-ink-muted: oklch(45% 0.01 75); /* muted section headings */
+  --color-ink-soft: oklch(55% 0.01 75); /* secondary text */
+  --color-ink-softer: oklch(60% 0.01 75); /* empty states, fine print */
+  --color-ink-faint: oklch(70% 0.01 75); /* quiet icons (the delete cross) */
+
+  /* ---- Rules, dividers, neutral fills ---- */
+  --color-line: oklch(90% 0.01 75); /* field border */
+  --color-line-strong: oklch(88% 0.01 75);
+  --color-line-soft: oklch(95% 0.01 75); /* divider inside a card */
+  --color-line-dashed: oklch(85% 0.01 75); /* dashed photo circle */
+  --color-key-border: oklch(92% 0.01 75); /* PIN keypad keys */
+  --color-chip: oklch(93% 0.01 75); /* secondary pill buttons */
+  --color-chip-hover: oklch(90% 0.01 75);
+  --color-hover: oklch(96% 0.01 75); /* row hover */
+  --color-subtle: oklch(97% 0.01 75); /* quiet block fill */
+  --color-track: oklch(93% 0.01 75); /* progress bar track */
+  --color-brand-letters: oklch(60% 0.02 75); /* wordmark in letter-spaced type */
+
+  /* ---- Accent: warm amber (CTA, admin avatar, floating + button) ---- */
+  --color-accent: oklch(68% 0.15 55);
+  --color-accent-hover: oklch(63% 0.15 55);
+  --color-accent-on: oklch(65% 0.15 55); /* toggle switched on */
+  --color-accent-ink: oklch(50% 0.16 55); /* text or link on a light fill */
+  --color-accent-bg: oklch(94% 0.05 60); /* manager badge */
+
+  /* ---- Debt (warm red-orange) ---- */
+  --color-debt: oklch(52% 0.18 25); /* balance amount, confirm button */
+  --color-debt-strong: oklch(58% 0.16 25); /* add-an-expense button */
+  --color-debt-amount: oklch(50% 0.14 40); /* amount on an expense line */
+  --color-debt-ink: oklch(42% 0.16 25); /* alert banner text */
+  --color-debt-ink-strong: oklch(45% 0.16 25); /* selected expense tab */
+  --color-debt-link: oklch(48% 0.16 25); /* destructive actions */
+  --color-debt-bg: oklch(95% 0.04 25); /* alert banner fill */
+  --color-debt-bg-strong: oklch(96% 0.05 25); /* selected expense tab fill */
+  --color-debt-line: oklch(90% 0.06 25); /* delete button border */
+
+  /* ---- Payment (green) ---- */
+  --color-paid: oklch(58% 0.14 145); /* record-a-payment button */
+  --color-paid-amount: oklch(55% 0.14 145); /* amount on a payment line */
+  --color-paid-ink: oklch(40% 0.14 145); /* selected payment tab */
+  --color-paid-bg: oklch(95% 0.05 145);
+
+  /* ---- Credit (soft blue) ---- */
+  --color-credit: oklch(52% 0.14 210);
+
+  /* ---- Avatar palette, rotating on the member index ---- */
+  --color-avatar-0: #e8c9a0;
+  --color-avatar-1: #c9dac8;
+  --color-avatar-2: #cbd5e3;
+  --color-avatar-3: #e3c9ce;
+  --color-avatar-4: #d9cbb3;
+
+  /* ---- Typography ---- */
+  --font-display: var(--font-poppins), system-ui, sans-serif; /* headings, amounts, wordmark */
+  --font-sans: var(--font-inter), system-ui, sans-serif; /* body, UI */
+
+  --text-label: 0.75rem; /* 12px — field labels */
+  --text-sm: 0.8125rem; /* 13px */
+  --text-base: 0.875rem; /* 14px */
+  --text-md: 0.9375rem; /* 15px */
+  --text-lg: 1.0625rem; /* 17px — screen title */
+  --text-xl: 1.375rem; /* 22px — dashboard title */
+  --text-2xl: 1.75rem; /* 28px — login title */
+  --text-amount: 2.75rem; /* 44px — balance, member view */
+  --text-amount-sm: 2.125rem; /* 34px — balance, admin detail */
+
+  /* ---- Radii ---- */
+  --radius-card: 1.25rem; /* 20px */
+  --radius-panel: 1.125rem; /* 18px */
+  --radius-tile: 0.875rem; /* 14px */
+  --radius-field: 0.75rem; /* 12px */
+  --radius-input: 0.625rem; /* 10px */
+  --radius-pill: 1.25rem; /* 20px */
+
+  /* ---- Shadows ---- */
+  --shadow-card: 0 1px 3px rgba(43, 47, 51, 0.06), 0 12px 28px rgba(43, 47, 51, 0.08);
+  --shadow-float: 0 8px 20px rgba(0, 0, 0, 0.2);
+
+  /* ---- Animations (short, never decorative) ---- */
+  --animate-fade-in: fade-in 0.15s ease;
+  --animate-modal-in: modal-in 0.18s ease;
+  --animate-shake: shake-x 0.35s ease;
+  --animate-toast-in: toast-in 0.2s ease;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shake-x {
+  10%,
+  90% {
+    transform: translateX(-3px);
+  }
+  20%,
+  80% {
+    transform: translateX(5px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-9px);
+  }
+  40%,
+  60% {
+    transform: translateX(9px);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

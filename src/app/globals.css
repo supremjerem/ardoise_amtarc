@@ -1,26 +1,64 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
+/*
+ * The app commits to a single light rendering (warm white), as designed.
+ * No dark variant: the scheme is forced so native controls (fields, selects)
+ * stay legible even when the device is in dark mode.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/*
+ * "Grands caractères" (large text): scales the whole interface at once.
+ * Since everything is sized in rem, changing the root is enough — no layout
+ * needs touching. The class is set on <html> before first paint (inline
+ * script in layout.tsx) to avoid a visible jump on load.
+ */
+html {
+  font-size: 100%;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html.large-text {
+  font-size: 125%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* Stop iOS from resizing text on its own in landscape. */
+  -webkit-text-size-adjust: 100%;
+}
+
+/*
+ * Touch targets: 44px is the comfortable minimum, all the more so for older
+ * hands. Header text buttons are excluded — they carry their own padding and
+ * sit outside the main entry flow.
+ */
+button,
+a[role="button"],
+input,
+select {
+  min-height: 2.75rem;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Honour the system "reduce motion" setting. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
