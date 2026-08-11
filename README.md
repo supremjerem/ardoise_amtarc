@@ -5,8 +5,8 @@ they owe, till managers record purchases and payments.
 
 <!-- Refresh this once the member view lands: it should show a balance, not the login list. -->
 
-![The login screen on a phone: the club wordmark above a card listing members, each with initials
-and a "Responsable" badge for till managers](docs/screenshot.png)
+![The login screen on a phone: the club wordmark above a card with a search field and a list of
+members, each with initials and a "Responsable" badge for till managers](docs/screenshot.png)
 
 > **Interface language:** the UI is French — the club's members are French speakers. The
 > codebase, comments and documentation are English.
@@ -109,7 +109,7 @@ is directly unit-testable and survives a change of stack.
 - [x] Database: schema, migrations, integrity constraints, demo seed
 - [x] Business logic: money and balance rules, covered by unit tests
 - [x] Authentication: Argon2id PINs, sessions, progressive lockout, access guards
-- [x] Login screen: member list and PIN keypad
+- [x] Login screen: searchable member list and PIN keypad
 - [ ] Member view: balance, cap gauge, history
 - [ ] Till view: dashboard, member detail, transaction and member modals
 - [ ] Settings: default cap, quick-price tariffs, till managers
