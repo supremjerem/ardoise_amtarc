@@ -7,6 +7,7 @@ import {
   countOverCap,
   describeBalance,
   describeEntry,
+  entryLabel,
   isOverCap,
   totalOwed,
 } from "./balance";
@@ -164,5 +165,28 @@ describe("describeEntry", () => {
 
   it("should show no amount on a reminder", () => {
     expect(describeEntry(reminder()).amountLabel).toBe("");
+  });
+});
+
+describe("entryLabel", () => {
+  it("should show what the till manager typed", () => {
+    expect(entryLabel("debit", "Bières")).toBe("Bières");
+    expect(entryLabel("credit", "Règlement espèces")).toBe("Règlement espèces");
+  });
+
+  it("should trim a note padded with spaces", () => {
+    expect(entryLabel("debit", "  Café  ")).toBe("Café");
+  });
+
+  it("should fall back to the kind when no note was written", () => {
+    expect(entryLabel("debit", null)).toBe("Dépense");
+    expect(entryLabel("credit", null)).toBe("Paiement reçu");
+    expect(entryLabel("reminder", null)).toBe("Rappel envoyé");
+  });
+
+  it("should treat a blank note as no note", () => {
+    /* A line reading as nothing at all is unsettling in one's own account. */
+    expect(entryLabel("debit", "   ")).toBe("Dépense");
+    expect(entryLabel("reminder", "")).toBe("Rappel envoyé");
   });
 });

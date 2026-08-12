@@ -3,10 +3,11 @@
 Web app that replaces the paper notebook behind the bar of the AMTARC club: members check what
 they owe, till managers record purchases and payments.
 
-<!-- Refresh this once the member view lands: it should show a balance, not the login list. -->
+<!-- Refresh this whenever the member view changes shape. Demo data, taken from a production build. -->
 
-![The login screen on a phone: the club wordmark above a card with a search field and a list of
-members, each with initials and a "Responsable" badge for till managers](docs/screenshot.png)
+![A member's slate on a phone: the balance 29,00 € under the caption "À régler", a progress bar
+full to the cap, a banner warning that the cap is exceeded, and the history of two
+purchases](docs/screenshot.png)
 
 > **Interface language:** the UI is French — the club's members are French speakers. The
 > codebase, comments and documentation are English.
@@ -110,7 +111,7 @@ is directly unit-testable and survives a change of stack.
 - [x] Business logic: money and balance rules, covered by unit tests
 - [x] Authentication: Argon2id PINs, sessions, progressive lockout, access guards
 - [x] Login screen: searchable member list and PIN keypad
-- [ ] Member view: balance, cap gauge, history
+- [x] Member view: balance, cap gauge, history
 - [ ] Till view: dashboard, member detail, transaction and member modals
 - [ ] Settings: default cap, quick-price tariffs, till managers
 - [ ] Ledger: printable page and CSV export

@@ -34,8 +34,9 @@ body {
 
 /*
  * Touch targets: 44px is the comfortable minimum, all the more so for older
- * hands. Header text buttons are excluded — they carry their own padding and
- * sit outside the main entry flow.
+ * hands. This applies to every button, header ones included — a small target
+ * is no easier to hit for sitting above the fold. Links that act as buttons
+ * are not matched here and have to set their own height.
  */
 button,
 a[role="button"],
