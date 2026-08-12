@@ -33,7 +33,7 @@ export function MemberPicker({
     return (
       <div className="bg-surface rounded-card shadow-card p-5.5">
         <h2 className="text-ink-muted text-md mb-3.5 font-semibold">Qui êtes-vous&nbsp;?</h2>
-        <p className="text-ink-softer text-base">
+        <p className="text-ink-soft text-base">
           Aucun membre n&apos;est encore enregistré. Un responsable de caisse doit créer le premier
           compte.
         </p>
@@ -70,12 +70,12 @@ export function MemberPicker({
            * keyboard and hides the very list most people came to tap.
            */
           autoComplete="off"
-          className="border-line rounded-field bg-surface text-ink placeholder:text-ink-softer w-full border py-2.75 pr-3.5 pl-10.5 text-base"
+          className="border-line rounded-field bg-surface text-ink placeholder:text-ink-soft w-full border py-2.75 pr-3.5 pl-10.5 text-base"
         />
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-ink-softer px-2.5 py-3 text-base">
+        <p className="text-ink-soft px-2.5 py-3 text-base">
           Aucun nom ne correspond à «&nbsp;{query.trim()}&nbsp;».
         </p>
       ) : (

@@ -62,7 +62,7 @@ export function MemberIndex({
           placeholder="Rechercher un membre…"
           aria-label="Rechercher un membre par nom ou numéro de licence"
           autoComplete="off"
-          className="border-line rounded-field bg-surface text-ink placeholder:text-ink-softer min-w-0 flex-1 border px-3.5 py-2.75 text-base"
+          className="border-line rounded-field bg-surface text-ink placeholder:text-ink-soft min-w-0 flex-1 border px-3.5 py-2.75 text-base"
         />
         <button
           type="button"
@@ -74,7 +74,7 @@ export function MemberIndex({
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-ink-softer py-7.5 text-center text-sm">
+        <p className="text-ink-soft py-7.5 text-center text-sm">
           {members.length === 0 ? "Aucun membre enregistré." : "Aucun membre trouvé."}
         </p>
       ) : (

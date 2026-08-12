@@ -46,7 +46,7 @@ export default async function Page({ params }: PageProps<"/caisse/membre/[id]">)
   const balance = describeBalance(balanceCents);
 
   return (
-    <main className="flex w-full max-w-190 flex-col px-5 pb-25">
+    <main id="contenu" className="flex w-full max-w-190 flex-col px-5 pb-25">
       <header className="flex items-center gap-2.5 px-0.5 pt-6 pb-4.5">
         <Link
           href="/caisse"

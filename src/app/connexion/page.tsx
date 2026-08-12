@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { LargeTextToggle } from "@/components/large-text-toggle";
 import { listMembersForLogin } from "@/lib/members";
 import { readCurrentMember } from "@/lib/session";
 
@@ -29,7 +30,7 @@ export default async function Page() {
   const members = await listMembersForLogin();
 
   return (
-    <main className="flex min-h-full w-full max-w-110 flex-col px-5 pb-10">
+    <main id="contenu" className="flex min-h-full w-full max-w-110 flex-col px-5 pb-10">
       <header className="px-1 pt-14 pb-7 text-center">
         <p className="font-display text-brand-letters text-md font-bold tracking-[0.125em]">
           AMTARC
@@ -38,6 +39,14 @@ export default async function Page() {
       </header>
 
       <LoginFlow members={members} />
+
+      {/*
+       * Reachable before signing in on purpose: someone who needs bigger text
+       * needs it to read this screen, not once they are past it.
+       */}
+      <div className="mt-5 flex justify-center">
+        <LargeTextToggle />
+      </div>
     </main>
   );
 }
