@@ -39,13 +39,16 @@ jobs:
       PIN_PEPPER: ci-only-pin-pepper-value-at-least-32b
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          # Keep this on an Active LTS, and keep @types/node on the same major:
+          # types describing a runtime the app never runs on are worse than no
+          # types at all.
+          node-version: 24
           cache: pnpm
 
       - name: Install dependencies

@@ -1,8 +1,12 @@
 version: 2
 
 updates:
+  # Dependency updates are day-to-day work, so they land on develop and reach
+  # main through the same reviewed pull request as everything else. Aimed at
+  # main they would sit apart from the branch they have to be tested against.
   - package-ecosystem: npm
     directory: "/"
+    target-branch: develop
     schedule:
       interval: monthly
     open-pull-requests-limit: 5
@@ -15,11 +19,17 @@ updates:
       development:
         dependency-type: development
         update-types: [minor, patch]
+    # @types/node tracks the Node major the app runs on, not the newest one
+    # published. Raise this the day CI moves to the next Active LTS.
+    ignore:
+      - dependency-name: "@types/node"
+        versions: [">=25"]
     commit-message:
       prefix: "chore(deps)"
 
   - package-ecosystem: github-actions
     directory: "/"
+    target-branch: develop
     schedule:
       interval: monthly
     commit-message:

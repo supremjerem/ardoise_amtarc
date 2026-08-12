@@ -2,6 +2,8 @@ import { hash, verify } from "@node-rs/argon2";
 
 import { env } from "@/env";
 
+import { requiredPinLength } from "./pin-length";
+
 /*
  * PIN hashing.
  *
@@ -19,13 +21,12 @@ import { env } from "@/env";
  * Defence 3 does the heavy lifting. The other two cover the leaked-database case.
  */
 
-export const MEMBER_PIN_LENGTH = 4;
-export const ADMIN_PIN_LENGTH = 6;
-
-/** PIN length required for a given role. */
-export function requiredPinLength(isAdmin: boolean): number {
-  return isAdmin ? ADMIN_PIN_LENGTH : MEMBER_PIN_LENGTH;
-}
+/*
+ * The lengths live in ./pin-length so the browser can read them without this
+ * file, and Argon2 with it, following into the client bundle. Re-exported
+ * here so server code has one obvious place to look for anything PIN-related.
+ */
+export { ADMIN_PIN_LENGTH, MEMBER_PIN_LENGTH, requiredPinLength } from "./pin-length";
 
 export type PinValidation = { ok: true } | { ok: false; message: string };
 

@@ -27,11 +27,20 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/connexion", request.url));
   }
 
-  /* Already signed in: no reason to show the login screen again. */
-  if (hasCookie && isPublic) {
-    return NextResponse.redirect(new URL("/moi", request.url));
-  }
-
+  /*
+   * Deliberately NOT the mirror image of the rule above.
+   *
+   * Sending anyone holding a cookie away from /connexion looks symmetrical
+   * and is a trap: the cookie proves nothing. Once it is stale — an expired
+   * session, a code changed by a manager, a member archived, all of which
+   * close sessions server-side — the proxy sends them to /moi, the guard
+   * there finds no session and sends them back, and the browser gives up
+   * with a redirect loop. Being locked out by an old cookie is exactly the
+   * moment someone needs the login screen.
+   *
+   * Whether a signed-in visitor should skip the login screen is decided by
+   * /connexion itself, where the session can actually be read.
+   */
   return NextResponse.next();
 }
 

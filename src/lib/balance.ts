@@ -133,6 +133,22 @@ export type HistoryLine = {
   color: "debt" | "paid" | "neutral";
 };
 
+/**
+ * Wording of a history line.
+ *
+ * The note is what the till manager typed ("Bières", "Règlement espèces"), so
+ * it wins whenever there is one. A blank note still has to read as something:
+ * an undated, unlabelled line in one's own account is unsettling.
+ */
+export function entryLabel(kind: TransactionKind, note: string | null): string {
+  const written = note?.trim();
+  if (written) return written;
+
+  if (kind === "debit") return "Dépense";
+  if (kind === "credit") return "Paiement reçu";
+  return "Rappel envoyé";
+}
+
 /** Signed amount of a history line, with its colour. */
 export function describeEntry(entry: BalanceEntry): HistoryLine {
   if (entry.kind === "debit") {

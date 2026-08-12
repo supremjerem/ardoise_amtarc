@@ -9,6 +9,8 @@ on:
     # Weekly, so a newly published vulnerability class is caught even when the
     # repository is quiet — which it will be, most of the time.
     - cron: "0 6 * * 1"
+  # Lets a run be retriggered by hand rather than by pushing an empty commit.
+  workflow_dispatch:
 
 jobs:
   analyze:
@@ -20,7 +22,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: github/codeql-action/init@v4
         with:

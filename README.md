@@ -1,12 +1,15 @@
 # Ardoise AMTARC
 
+[![CI](https://github.com/supremjerem/ardoise_amtarc/actions/workflows/ci.yml/badge.svg)](https://github.com/supremjerem/ardoise_amtarc/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/supremjerem/ardoise_amtarc/actions/workflows/codeql.yml/badge.svg)](https://github.com/supremjerem/ardoise_amtarc/actions/workflows/codeql.yml)
+
 Web app that replaces the paper notebook behind the bar of the AMTARC club: members check what
 they owe, till managers record purchases and payments.
 
-<!-- Refresh this once the member view lands: it should show a balance, not the login list. -->
+<!-- Refresh this whenever a main screen changes shape. Demo data, taken from a production build. -->
 
-![The login screen on a phone: the club wordmark above a card listing members, each with initials
-and a "Responsable" badge for till managers](docs/screenshot.png)
+![The till dashboard: 105,00 € owed in total, two members over their cap, a search field beside a
+"+ Membre" button, and the member list ordered by what each one owes](docs/screenshot.png)
 
 > **Interface language:** the UI is French — the club's members are French speakers. The
 > codebase, comments and documentation are English.
@@ -46,7 +49,7 @@ Structural decisions are recorded in [`docs/adr/`](docs/adr/) — notably
 
 ## Getting started
 
-Requirements: Node 20+, pnpm, Docker (for the local database).
+Requirements: Node 24+, pnpm, Docker (for the local database).
 
 ```bash
 pnpm install
@@ -109,9 +112,9 @@ is directly unit-testable and survives a change of stack.
 - [x] Database: schema, migrations, integrity constraints, demo seed
 - [x] Business logic: money and balance rules, covered by unit tests
 - [x] Authentication: Argon2id PINs, sessions, progressive lockout, access guards
-- [x] Login screen: member list and PIN keypad
-- [ ] Member view: balance, cap gauge, history
-- [ ] Till view: dashboard, member detail, transaction and member modals
+- [x] Login screen: searchable member list and PIN keypad
+- [x] Member view: balance, cap gauge, history
+- [x] Till view: dashboard, member detail, transaction and member modals
 - [ ] Settings: default cap, quick-price tariffs, till managers
 - [ ] Ledger: printable page and CSV export
 - [ ] Finishing: PWA, large-text toggle, accessibility pass, Playwright suite
