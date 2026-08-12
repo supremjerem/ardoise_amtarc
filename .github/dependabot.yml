@@ -19,6 +19,11 @@ updates:
       development:
         dependency-type: development
         update-types: [minor, patch]
+    # @types/node tracks the Node major the app runs on, not the newest one
+    # published. Raise this the day CI moves to the next Active LTS.
+    ignore:
+      - dependency-name: "@types/node"
+        versions: [">=25"]
     commit-message:
       prefix: "chore(deps)"
 
