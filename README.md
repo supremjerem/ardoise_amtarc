@@ -116,7 +116,7 @@ is directly unit-testable and survives a change of stack.
 - [x] Member view: balance, cap gauge, history
 - [x] Till view: dashboard, member detail, transaction and member modals
 - [x] Settings: default cap, quick-price tariffs, till managers
-- [ ] Ledger: printable page and CSV export
+- [x] Ledger: printable page and CSV export
 - [ ] Finishing: PWA, large-text toggle, accessibility pass, Playwright suite
 - [ ] Deployment: managed Postgres in the EU, first admin bootstrap script
 
