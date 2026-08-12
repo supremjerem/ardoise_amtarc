@@ -14,9 +14,24 @@
   --color-surface: #ffffff; /* cards */
   --color-ink: #2b2f33; /* primary text (graphite) */
   --color-ink-muted: oklch(45% 0.01 75); /* muted section headings */
-  --color-ink-soft: oklch(55% 0.01 75); /* secondary text */
-  --color-ink-softer: oklch(60% 0.01 75); /* empty states, fine print */
-  --color-ink-faint: oklch(70% 0.01 75); /* quiet icons (the delete cross) */
+  /*
+   * Measured, not eyeballed. Against the warm canvas (not white), neutral text
+   * needs L ≤ 54% to clear the 4.5:1 that WCAG asks for normal text — the
+   * handoff's 55% lands at 4.45. One percent darker, and unnoticeable.
+   */
+  --color-ink-soft: oklch(54% 0.01 75); /* secondary text */
+
+  /*
+   * There is no lighter text tone. The handoff had one at 60% for empty states
+   * and fine print, which measures 3.62:1 — and every use of it turned out to
+   * be real content ("Aucune écriture", placeholders). A tone whose purpose is
+   * "quieter than readable" cannot exist for text on this background, so it
+   * was folded into --color-ink-soft rather than kept as a trap.
+   */
+
+  /* Quiet icons. 62%, not the handoff's 70%: the delete cross is a control,
+     and UI graphics need 3:1 — 70% measures 2.67. */
+  --color-ink-faint: oklch(62% 0.01 75);
 
   /* ---- Rules, dividers, neutral fills ---- */
   --color-line: oklch(90% 0.01 75); /* field border */

@@ -32,7 +32,7 @@ export default async function Page() {
   const overCap = countOverCap(membersWithBalances);
 
   return (
-    <main className="flex w-full max-w-190 flex-col px-5 pb-25">
+    <main id="contenu" className="flex w-full max-w-190 flex-col px-5 pb-25">
       <header className="flex items-center justify-between gap-3 px-0.5 pt-6 pb-4.5">
         <div>
           <p className="font-display text-brand-letters text-label font-bold tracking-[0.16em]">

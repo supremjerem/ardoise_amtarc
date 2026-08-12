@@ -14,6 +14,10 @@ import { useEffect, useId, useRef } from "react";
  * rather than because an effect raced to blank its fields.
  */
 
+/** What the browser will stop on when tabbing, inside a dialog. */
+const FOCUSABLE =
+  'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
+
 export function Modal({
   onClose,
   title,
@@ -38,15 +42,40 @@ export function Modal({
      * it. The first field is preferred over the card: on a form, that is
      * where someone means to start.
      */
-    const firstField = card.current?.querySelector<HTMLElement>(
-      "input:not([type=hidden]), select, textarea, button",
-    );
+    const firstField = card.current?.querySelector<HTMLElement>(FOCUSABLE);
     (firstField ?? card.current)?.focus();
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
+        return;
+      }
+
+      /*
+       * Keep Tab inside the dialog. `aria-modal` tells a screen reader the
+       * rest of the page is inert, but it does nothing to the tab order:
+       * without this, tabbing walks out of an open dialog into the page
+       * behind it, where the focus ring is invisible under the backdrop and
+       * there is no obvious way back.
+       */
+      if (event.key !== "Tab" || !card.current) return;
+
+      const focusable = [...card.current.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+        (element) => !element.hasAttribute("disabled"),
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || active === card.current)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
       }
     }
 
@@ -106,7 +135,7 @@ export function Field({ label, children }: { label: string; children: React.Reac
 
 /** The one input style used across every till dialog. */
 export const INPUT_CLASS =
-  "border-line rounded-input bg-surface text-ink placeholder:text-ink-softer w-full border px-3 py-2.75 text-base";
+  "border-line rounded-input bg-surface text-ink placeholder:text-ink-soft w-full border px-3 py-2.75 text-base";
 
 export function ModalError({ message }: { message: string | null }) {
   if (!message) return null;

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { logOut } from "@/app/actions/auth";
 import { Avatar } from "@/components/avatar";
+import { LargeTextToggle } from "@/components/large-text-toggle";
 import { requireMember } from "@/lib/auth";
 import { calculateBalance } from "@/lib/balance";
 import { readMemberHistory } from "@/lib/ledger";
@@ -27,12 +28,17 @@ export default async function Page() {
   const balanceCents = calculateBalance(entries);
 
   return (
-    <main className="flex w-full max-w-115 flex-col px-5 pb-25">
+    <main id="contenu" className="flex w-full max-w-115 flex-col px-5 pb-25">
       <header className="flex items-center justify-between px-0.5 pt-6 pb-4.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={member.name} colorIndex={member.avatarColorIndex} size="sm" />
           <div className="min-w-0">
-            <p className="text-md truncate font-semibold">{member.name}</p>
+            {/*
+             * The page had no h1 at all: its only headings were "À régler"
+             * and "Historique", so a screen reader announced the sections of
+             * a page with no name. The member's name is what this page is.
+             */}
+            <h1 className="text-md truncate font-semibold">{member.name}</h1>
             {member.licenceNumber && (
               <p className="text-ink-soft text-label">Licence {member.licenceNumber}</p>
             )}
@@ -62,6 +68,10 @@ export default async function Page() {
       <BalanceCard balanceCents={balanceCents} capCents={member.capCents} />
       <CapAlert balanceCents={balanceCents} capCents={member.capCents} />
       <History entries={entries} />
+
+      <div className="mt-7 flex justify-center">
+        <LargeTextToggle />
+      </div>
     </main>
   );
 }

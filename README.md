@@ -117,7 +117,8 @@ is directly unit-testable and survives a change of stack.
 - [x] Till view: dashboard, member detail, transaction and member modals
 - [x] Settings: default cap, quick-price tariffs, till managers
 - [x] Ledger: printable page and CSV export
-- [ ] Finishing: PWA, large-text toggle, accessibility pass, Playwright suite
+- [x] Finishing: installable PWA, large-text toggle, accessibility pass
+- [ ] End-to-end tests: Playwright suite wired into CI
 - [ ] Deployment: managed Postgres in the EU, first admin bootstrap script
 
 ## Design reference

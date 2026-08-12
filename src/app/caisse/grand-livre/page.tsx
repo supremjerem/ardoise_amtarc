@@ -56,7 +56,7 @@ export default async function Page() {
   });
 
   return (
-    <main className="ledger flex w-full max-w-235 flex-col px-5 pb-25">
+    <main id="contenu" className="ledger flex w-full max-w-235 flex-col px-5 pb-25">
       <header className="flex flex-wrap items-center gap-3 px-0.5 pt-6 pb-4.5 print:hidden">
         <Link
           href="/caisse/reglages"
@@ -110,7 +110,7 @@ export default async function Page() {
 
         <h3 className="mb-2 text-base font-semibold">Écritures</h3>
         {rows.length === 0 ? (
-          <p className="text-ink-softer py-6 text-center text-sm">Aucune écriture.</p>
+          <p className="text-ink-soft py-6 text-center text-sm">Aucune écriture.</p>
         ) : (
           <table className={TABLE_CLASS}>
             <thead>
@@ -128,7 +128,7 @@ export default async function Page() {
                 <tr
                   key={row.id}
                   className={`border-line-soft border-b ${
-                    row.voidedAt ? "text-ink-softer line-through" : ""
+                    row.voidedAt ? "text-ink-soft line-through" : ""
                   }`}
                 >
                   <td className="py-1.5 whitespace-nowrap">{formatEntryDate(row.occurredOn)}</td>

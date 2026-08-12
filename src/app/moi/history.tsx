@@ -21,7 +21,7 @@ export function History({ entries }: { entries: LedgerEntry[] }) {
       <h2 className="text-md px-0.5 font-semibold">Historique</h2>
 
       {entries.length === 0 ? (
-        <p className="text-ink-softer py-7.5 text-center text-sm">
+        <p className="text-ink-soft py-7.5 text-center text-sm">
           Aucune transaction pour l&apos;instant.
         </p>
       ) : (

@@ -31,7 +31,7 @@ export function TariffsCard({ tariffs }: { tariffs: Tariff[] }) {
       action={<AddButton onClick={() => setCreating(true)} label="Ajouter un tarif" />}
     >
       {tariffs.length === 0 ? (
-        <p className="text-ink-softer py-4 text-center text-sm">
+        <p className="text-ink-soft py-4 text-center text-sm">
           Aucun tarif. Les montants devront être saisis à la main.
         </p>
       ) : (
