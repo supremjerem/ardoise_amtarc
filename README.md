@@ -1,5 +1,8 @@
 # Ardoise AMTARC
 
+[![CI](https://github.com/supremjerem/ardoise_amtarc/actions/workflows/ci.yml/badge.svg)](https://github.com/supremjerem/ardoise_amtarc/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/supremjerem/ardoise_amtarc/actions/workflows/codeql.yml/badge.svg)](https://github.com/supremjerem/ardoise_amtarc/actions/workflows/codeql.yml)
+
 Web app that replaces the paper notebook behind the bar of the AMTARC club: members check what
 they owe, till managers record purchases and payments.
 

@@ -9,6 +9,8 @@ on:
     # Weekly, so a newly published vulnerability class is caught even when the
     # repository is quiet — which it will be, most of the time.
     - cron: "0 6 * * 1"
+  # Lets a run be retriggered by hand rather than by pushing an empty commit.
+  workflow_dispatch:
 
 jobs:
   analyze:
