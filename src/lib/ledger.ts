@@ -1,9 +1,10 @@
 import "server-only";
 
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { db } from "@/db";
-import { tariffs, transactions, type TransactionKind } from "@/db/schema";
+import { members, tariffs, transactions, type TransactionKind } from "@/db/schema";
 
 /*
  * Ledger reads.
@@ -65,4 +66,54 @@ export async function listActiveTariffs(): Promise<Tariff[]> {
     .from(tariffs)
     .where(eq(tariffs.isActive, true))
     .orderBy(asc(tariffs.sortOrder), asc(tariffs.label));
+}
+
+/* ------------------------------------------------------------------ */
+/* The ledger as a whole                                               */
+/* ------------------------------------------------------------------ */
+
+/** One line of the club's full ledger, whoever it belongs to. */
+export type LedgerRow = {
+  id: string;
+  memberName: string;
+  licenceNumber: string | null;
+  kind: TransactionKind;
+  amountCents: number;
+  note: string | null;
+  occurredOn: string;
+  recordedBy: string | null;
+  voidedAt: Date | null;
+};
+
+/**
+ * Every entry the club has ever recorded, newest first.
+ *
+ * Voided entries are INCLUDED here, unlike everywhere else in the app. This is
+ * the accounting record: a printout or an export that quietly omitted the
+ * corrections would not be the ledger, it would be a summary of it. Each line
+ * carries who recorded it and whether it was later voided, so the document
+ * answers "what happened, and who did it?" on its own.
+ *
+ * Archived members keep their lines: their history is why they are archived
+ * rather than deleted.
+ */
+export async function readFullLedger(): Promise<LedgerRow[]> {
+  const author = alias(members, "author");
+
+  return db
+    .select({
+      id: transactions.id,
+      memberName: members.name,
+      licenceNumber: members.licenceNumber,
+      kind: transactions.kind,
+      amountCents: transactions.amountCents,
+      note: transactions.note,
+      occurredOn: transactions.occurredOn,
+      recordedBy: author.name,
+      voidedAt: transactions.voidedAt,
+    })
+    .from(transactions)
+    .innerJoin(members, eq(members.id, transactions.memberId))
+    .leftJoin(author, eq(author.id, transactions.createdBy))
+    .orderBy(desc(transactions.occurredOn), desc(transactions.createdAt));
 }

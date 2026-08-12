@@ -8,6 +8,7 @@ import { readSettings } from "@/lib/settings";
 
 import { DefaultCapCard } from "./default-cap-card";
 import { ManagersCard } from "./managers-card";
+import { SettingsCard } from "./settings-card";
 import { TariffsCard } from "./tariffs-card";
 
 export const metadata: Metadata = {
@@ -43,6 +44,18 @@ export default async function Page() {
       <DefaultCapCard defaultCapCents={settings.defaultCapCents} />
       <TariffsCard tariffs={tariffs} />
       <ManagersCard managers={managers} defaultCapCents={settings.defaultCapCents} />
+
+      <SettingsCard
+        title="Grand livre"
+        description="Toutes les écritures du club, écritures annulées comprises, à imprimer ou à ouvrir dans un tableur."
+      >
+        <Link
+          href="/caisse/grand-livre"
+          className="rounded-field bg-ink text-surface inline-flex min-h-11 items-center px-4.5 text-sm font-semibold"
+        >
+          Imprimer / exporter
+        </Link>
+      </SettingsCard>
     </main>
   );
 }
