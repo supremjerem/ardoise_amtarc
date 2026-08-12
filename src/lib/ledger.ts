@@ -1,9 +1,9 @@
 import "server-only";
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
-import { transactions, type TransactionKind } from "@/db/schema";
+import { tariffs, transactions, type TransactionKind } from "@/db/schema";
 
 /*
  * Ledger reads.
@@ -44,4 +44,25 @@ export async function readMemberHistory(memberId: string): Promise<LedgerEntry[]
       /* Same-day entries keep the order they were keyed in, newest first. */
       .orderBy(desc(transactions.occurredOn), desc(transactions.createdAt))
   );
+}
+
+/** A quick-price button behind the bar: "Bière — 3,00 €". */
+export type Tariff = {
+  id: string;
+  label: string;
+  amountCents: number;
+};
+
+/**
+ * The quick-price buttons, in the order the club arranged them.
+ *
+ * Inactive ones are left out rather than deleted: a tariff that stops being
+ * sold should not rewrite the entries that used it.
+ */
+export async function listActiveTariffs(): Promise<Tariff[]> {
+  return db
+    .select({ id: tariffs.id, label: tariffs.label, amountCents: tariffs.amountCents })
+    .from(tariffs)
+    .where(eq(tariffs.isActive, true))
+    .orderBy(asc(tariffs.sortOrder), asc(tariffs.label));
 }

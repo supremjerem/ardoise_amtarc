@@ -45,3 +45,20 @@ export function matchesName(name: string, query: string): boolean {
   const words = wordsOf(name);
   return typed.every((token) => words.some((word) => word.startsWith(token)));
 }
+
+/**
+ * Same, plus the licence number — what the till searches on.
+ *
+ * A licence matches on any part of it, not just its start: the number is
+ * written "AM2299" but people read out and type the digits alone.
+ */
+export function matchesMember(
+  member: { name: string; licenceNumber: string | null },
+  query: string,
+): boolean {
+  if (matchesName(member.name, query)) return true;
+  if (!member.licenceNumber) return false;
+
+  const typed = normalizeForSearch(query).trim();
+  return typed.length > 0 && normalizeForSearch(member.licenceNumber).includes(typed);
+}

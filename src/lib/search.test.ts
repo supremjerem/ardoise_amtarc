@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { matchesName, normalizeForSearch } from "./search";
+import { matchesMember, matchesName, normalizeForSearch } from "./search";
 
 describe("normalizeForSearch", () => {
   it("lowercases and strips accents", () => {
@@ -51,5 +51,36 @@ describe("matchesName", () => {
   it("shows everyone when nothing has been typed", () => {
     expect(matchesName("Bernard Lefèvre", "")).toBe(true);
     expect(matchesName("Bernard Lefèvre", "   ")).toBe(true);
+  });
+});
+
+describe("matchesMember", () => {
+  const bernard = { name: "Bernard Lefèvre", licenceNumber: "AM1042" };
+  const withoutLicence = { name: "Léa Fontaine", licenceNumber: null };
+
+  it("still matches on the name", () => {
+    expect(matchesMember(bernard, "lef")).toBe(true);
+    expect(matchesMember(bernard, "dupont")).toBe(false);
+  });
+
+  it("matches the digits of a licence, not only its start", () => {
+    /* People read out "1042", not "AM1042". */
+    expect(matchesMember(bernard, "1042")).toBe(true);
+    expect(matchesMember(bernard, "AM1042")).toBe(true);
+    expect(matchesMember(bernard, "am10")).toBe(true);
+  });
+
+  it("does not match another member's licence", () => {
+    expect(matchesMember(bernard, "9999")).toBe(false);
+  });
+
+  it("copes with a member who has no licence", () => {
+    expect(matchesMember(withoutLicence, "fontaine")).toBe(true);
+    expect(matchesMember(withoutLicence, "1042")).toBe(false);
+  });
+
+  it("shows everyone when nothing has been typed", () => {
+    expect(matchesMember(bernard, "")).toBe(true);
+    expect(matchesMember(withoutLicence, "  ")).toBe(true);
   });
 });
