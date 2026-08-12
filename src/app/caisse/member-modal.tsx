@@ -32,12 +32,15 @@ export function MemberModal({
   onClose,
   member,
   defaultCapCents,
+  initialIsAdmin = false,
   onRequestDelete,
 }: {
   onClose: () => void;
   /** Absent when creating. */
   member?: EditableMember;
   defaultCapCents: number;
+  /** Opens with the manager switch already on, when creating from Réglages. */
+  initialIsAdmin?: boolean;
   onRequestDelete?: () => void;
 }) {
   const showToast = useToast();
@@ -46,7 +49,7 @@ export function MemberModal({
   const [cap, setCap] = useState(centsToInputValue(member?.capCents ?? defaultCapCents));
   const [email, setEmail] = useState(member?.email ?? "");
   const [phone, setPhone] = useState(member?.phone ?? "");
-  const [isAdmin, setIsAdmin] = useState(member?.isAdmin ?? false);
+  const [isAdmin, setIsAdmin] = useState(member?.isAdmin ?? initialIsAdmin);
   /* Blank on edit means "keep the current code". */
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);

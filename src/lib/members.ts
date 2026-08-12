@@ -169,3 +169,15 @@ export async function listMemberOptions(): Promise<{ id: string; name: string }[
 
   return rows.sort(byFrenchName);
 }
+
+/** The till managers, for the settings screen. */
+export async function listManagers(): Promise<
+  { id: string; name: string; avatarColorIndex: number }[]
+> {
+  const rows = await db
+    .select({ id: members.id, name: members.name, avatarColorIndex: members.avatarColorIndex })
+    .from(members)
+    .where(and(eq(members.isAdmin, true), isNull(members.archivedAt)));
+
+  return rows.sort(byFrenchName);
+}

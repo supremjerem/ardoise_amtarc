@@ -49,6 +49,13 @@ export default async function Page() {
             Mon ardoise
           </Link>
 
+          <Link
+            href="/caisse/reglages"
+            className="text-ink-soft text-label inline-flex min-h-11 items-center px-1.5 py-2.25 font-semibold"
+          >
+            Réglages
+          </Link>
+
           <form action={logOut}>
             <button type="submit" className="text-ink-soft text-label px-1.5 py-2.25 font-semibold">
               Déconnexion
