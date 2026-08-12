@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { listMembersForLogin } from "@/lib/members";
+import { readCurrentMember } from "@/lib/session";
 
 import { LoginFlow } from "./login-flow";
 
@@ -16,6 +18,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
+  /*
+   * Whoever is genuinely signed in has no business here. Checked against the
+   * database rather than against the cookie, so a stale cookie leaves the
+   * login screen reachable instead of bouncing between two redirects.
+   */
+  const signedIn = await readCurrentMember();
+  if (signedIn) redirect(signedIn.isAdmin ? "/caisse" : "/moi");
+
   const members = await listMembersForLogin();
 
   return (
