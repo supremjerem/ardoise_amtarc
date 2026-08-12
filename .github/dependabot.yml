@@ -1,8 +1,12 @@
 version: 2
 
 updates:
+  # Dependency updates are day-to-day work, so they land on develop and reach
+  # main through the same reviewed pull request as everything else. Aimed at
+  # main they would sit apart from the branch they have to be tested against.
   - package-ecosystem: npm
     directory: "/"
+    target-branch: develop
     schedule:
       interval: monthly
     open-pull-requests-limit: 5
@@ -20,6 +24,7 @@ updates:
 
   - package-ecosystem: github-actions
     directory: "/"
+    target-branch: develop
     schedule:
       interval: monthly
     commit-message:

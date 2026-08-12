@@ -46,7 +46,7 @@ Structural decisions are recorded in [`docs/adr/`](docs/adr/) — notably
 
 ## Getting started
 
-Requirements: Node 20+, pnpm, Docker (for the local database).
+Requirements: Node 24+, pnpm, Docker (for the local database).
 
 ```bash
 pnpm install
