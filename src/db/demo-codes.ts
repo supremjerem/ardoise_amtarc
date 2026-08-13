@@ -8,6 +8,10 @@
  *
  * These are development-only. The seed refuses to run with
  * NODE_ENV=production, and a real deployment sets its own codes.
+ *
+ * They are also written out in the README's "Signing in" table, which nothing
+ * checks: change one here and change it there too, or the first thing a new
+ * reader tries will not work.
  */
 
 /** Six digits, because a till manager's code opens every member's record. */
