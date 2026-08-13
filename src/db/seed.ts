@@ -6,7 +6,9 @@
  *
  *   pnpm db:seed
  *
- * Refuses to run in production: these accounts have well-known PINs.
+ * This script WIPES the database and inserts nine members whose codes are
+ * published in the README. It therefore refuses to run against anything but a
+ * local database — see the guard below.
  */
 
 import { sql } from "drizzle-orm";
@@ -18,9 +20,43 @@ import { hashPin } from "@/lib/pin";
 
 import { ADMIN_PIN, MEMBER_PIN } from "./demo-codes";
 
-if (env.NODE_ENV === "production") {
-  throw new Error("The demo seed must never run in production.");
+/*
+ * Two guards, because the first one alone was not worth much.
+ *
+ * NODE_ENV is *undefined* in the shell where `pnpm db:seed` runs — it is not
+ * "production" on a production server either. An operator connected to the
+ * club's database and running this out of habit would have sailed straight
+ * past that check, wiped the ledger, and replaced the members with nine
+ * fictional ones whose codes are published on GitHub.
+ *
+ * So the real test is the database being pointed at, not an ambient variable
+ * that happens to be unset. Demo data belongs on a machine's own Postgres and
+ * nowhere else; anything remote is refused, whatever NODE_ENV claims.
+ */
+const LOCAL_HOSTS = ["localhost", "127.0.0.1", "::1", "0.0.0.0", "db", "postgres"];
+
+function assertLocalDatabase(): void {
+  if (env.NODE_ENV === "production") {
+    throw new Error("The demo seed must never run in production.");
+  }
+
+  let host: string;
+  try {
+    host = new URL(env.DATABASE_URL).hostname;
+  } catch {
+    throw new Error("DATABASE_URL is not a URL the seed can check. Refusing to run.");
+  }
+
+  if (!LOCAL_HOSTS.includes(host)) {
+    throw new Error(
+      `Refusing to seed "${host}": this wipes the database and installs accounts ` +
+        "with published codes.\n" +
+        '  To create the first manager on a real club, use: pnpm bootstrap --name "…"',
+    );
+  }
 }
+
+assertLocalDatabase();
 
 type DemoMember = {
   name: string;

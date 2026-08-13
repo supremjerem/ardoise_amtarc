@@ -65,9 +65,13 @@ pnpm db:migrate                        # create the schema
 pnpm bootstrap --name "Prénom Nom"     # create the first manager, note the code
 ```
 
-Then open the app, sign in, and add the club from the till. Do **not** run `pnpm db:seed` on a
-real database: it wipes everything and inserts nine fictional members. It refuses when
-`NODE_ENV=production`, which is a seatbelt, not a plan.
+Then open the app, sign in, and add the club from the till.
+
+`pnpm db:seed` is for development only: it **wipes the database** and inserts nine fictional
+members whose codes are printed in this repository. It refuses to run against any host but
+`localhost`, so pointing it at the club by accident fails loudly instead of destroying the
+ledger. `NODE_ENV` is not the guard — it is undefined in an operator's shell, on a server as
+much as on a laptop.
 
 ## With Docker
 
