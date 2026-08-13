@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { members } from "@/db/schema";
 import type { ActionResult } from "@/lib/action-result";
+import { recordAudit } from "@/lib/audit";
 import { requireAdminAction } from "@/lib/auth";
 import { AVATAR_PALETTE_SIZE } from "@/lib/avatar";
 import { MAX_AMOUNT_CENTS, parseMoney } from "@/lib/money";
@@ -49,7 +50,7 @@ function readCap(input: string): { ok: true; cents: number } | { ok: false; mess
 
 /** Creates a member and the code they will sign in with. */
 export async function createMember(input: MemberInput): Promise<ActionResult> {
-  await requireAdminAction();
+  const manager = await requireAdminAction();
 
   const parsed = memberInput.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message };
@@ -78,6 +79,13 @@ export async function createMember(input: MemberInput): Promise<ActionResult> {
     avatarColorIndex: total % AVATAR_PALETTE_SIZE,
   });
 
+  await recordAudit({
+    actorId: manager.id,
+    action: "member.create",
+    entity: "member",
+    payload: { name: parsed.data.name.trim(), isAdmin: parsed.data.isAdmin, capCents: cap.cents },
+  });
+
   revalidatePath("/caisse");
   revalidatePath("/connexion");
 
@@ -96,7 +104,7 @@ export async function createMember(input: MemberInput): Promise<ActionResult> {
  *    put it back, and the club would be locked out of its own till.
  */
 export async function updateMember(memberId: string, input: MemberInput): Promise<ActionResult> {
-  await requireAdminAction();
+  const manager = await requireAdminAction();
 
   const id = z.uuid().safeParse(memberId);
   if (!id.success) return { ok: false, message: "Membre introuvable." };
@@ -155,6 +163,24 @@ export async function updateMember(memberId: string, input: MemberInput): Promis
   /* A new code must not leave old sessions signed in on the old one. */
   if (pin) await destroyMemberSessions(existing.id);
 
+  /*
+   * `pinChanged` records THAT the code moved, never what it became. The whole
+   * point of hashing it is that nothing else stores it.
+   */
+  await recordAudit({
+    actorId: manager.id,
+    action: roleChanged ? "member.role-change" : "member.update",
+    entity: "member",
+    entityId: existing.id,
+    payload: {
+      name: parsed.data.name.trim(),
+      isAdmin: parsed.data.isAdmin,
+      wasAdmin: existing.isAdmin,
+      capCents: cap.cents,
+      pinChanged: Boolean(pin),
+    },
+  });
+
   revalidatePath("/caisse");
   revalidatePath(`/caisse/membre/${existing.id}`);
   revalidatePath("/connexion");
@@ -198,6 +224,14 @@ export async function archiveMember(memberId: string): Promise<ActionResult> {
     .where(eq(members.id, existing.id));
 
   await destroyMemberSessions(existing.id);
+
+  await recordAudit({
+    actorId: manager.id,
+    action: "member.archive",
+    entity: "member",
+    entityId: existing.id,
+    payload: { name: existing.name, wasAdmin: existing.isAdmin },
+  });
 
   revalidatePath("/caisse");
   revalidatePath("/connexion");

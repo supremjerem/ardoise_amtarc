@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/db";
 import { members } from "@/db/schema";
+import { listMembersForLogin } from "@/lib/members";
+import { matchesName } from "@/lib/search";
 import { verifyPin } from "@/lib/pin";
 import {
   checkLockout,
@@ -29,6 +31,58 @@ import { createSession, destroySession, purgeExpiredSessions } from "@/lib/sessi
 
 export type LoginResult =
   { ok: true; isAdmin: boolean } | { ok: false; message: string; locked?: boolean };
+
+/** What the login screen needs about a member it is offering. */
+export type LoginCandidate = {
+  id: string;
+  name: string;
+  avatarColorIndex: number;
+  pinLength: number;
+};
+
+/** Nothing is offered until this much has been typed. */
+const MIN_QUERY_LENGTH = 2;
+
+/** A search that matches half the club helps nobody find themselves. */
+const MAX_RESULTS = 8;
+
+/**
+ * Finds the members whose name matches what has been typed.
+ *
+ * A read, and yet an action: the login screen has to call it from the browser,
+ * and it must remain reachable without a session.
+ *
+ * It exists so the page can stop shipping the club's roster. It used to render
+ * every member's name, id and manager badge into HTML served to anyone, which
+ * published the membership list and handed an attacker their targets. Now the
+ * names live on the server and only a handful come back, for someone who
+ * already knows roughly what they are looking for.
+ *
+ * This raises the cost of enumeration; it does not make it impossible. Anyone
+ * willing to sweep two-letter prefixes can still rebuild the list. What it
+ * stops is the roster being one anonymous request away.
+ */
+export async function searchMembersForLogin(query: string): Promise<LoginCandidate[]> {
+  if (typeof query !== "string" || query.trim().length < MIN_QUERY_LENGTH) return [];
+
+  const candidates = await listMembersForLogin();
+
+  return candidates
+    .filter((member) => matchesName(member.name, query))
+    .slice(0, MAX_RESULTS)
+    .map(({ id, name, avatarColorIndex, pinLength }) => ({
+      id,
+      name,
+      avatarColorIndex,
+      /*
+       * Deliberately still returned: the keypad has to know how many digits to
+       * collect. It does reveal that this member manages the till — but only
+       * to somebody who already typed their name, rather than to every visitor
+       * at once, which is the difference this change is about.
+       */
+      pinLength,
+    }));
+}
 
 /** Identifies the device behind the request, for lockout purposes. */
 async function deviceFingerprint(): Promise<string> {

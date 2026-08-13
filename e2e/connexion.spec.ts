@@ -49,6 +49,27 @@ test.describe("signing in", () => {
     await expect(page).toHaveURL(/\/connexion/);
   });
 
+  test("no name is served until something is typed", async ({ page }) => {
+    /*
+     * The roster used to be rendered into this page for anyone who opened it.
+     * Now it is not in the HTML at all — which is the point of the search.
+     */
+    const response = await page.goto("/connexion");
+    const html = (await response?.text()) ?? "";
+
+    expect(html).not.toContain(MANAGER);
+    expect(html).not.toContain(MEMBER);
+    await expect(page.getByText(/Tapez au moins deux lettres/)).toBeVisible();
+  });
+
+  test("one letter is not enough to list anybody", async ({ page }) => {
+    await page.goto("/connexion");
+    await page.getByLabel("Rechercher votre nom").fill("b");
+
+    await expect(page.getByText(/Tapez au moins deux lettres/)).toBeVisible();
+    await expect(page.getByRole("button", { name: MANAGER })).toBeHidden();
+  });
+
   test("search matches a surname and ignores accents", async ({ page }) => {
     await page.goto("/connexion");
     const search = page.getByLabel("Rechercher votre nom");

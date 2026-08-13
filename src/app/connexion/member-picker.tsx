@@ -1,45 +1,57 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 
+import { searchMembersForLogin, type LoginCandidate } from "@/app/actions/auth";
 import { Avatar } from "@/components/avatar";
-import type { LoginMember } from "@/lib/members";
-import { matchesName } from "@/lib/search";
 
 /*
  * Step 1 of signing in: "Qui êtes-vous ?".
  *
- * The club can run to dozens of members, and scrolling a long alphabetical
- * list to find yourself is the worst way to start. Typing the first letters of
- * either name narrows it down immediately; the whole list is still there for
- * anyone who would rather just look.
+ * The names are NOT in this page. They are asked for as you type, and only a
+ * handful come back. The screen used to render the whole club — every name,
+ * id and manager badge — into HTML served to anyone who opened the site, which
+ * published the membership list and told an attacker which accounts were
+ * privileged. Typing two letters is a small price for not doing that.
+ *
+ * It costs the "just scroll and tap" gesture the handoff drew. At a club of
+ * fifty that gesture had already stopped working, which is why the search was
+ * added in the first place.
  */
 
-export function MemberPicker({
-  members,
-  onPick,
-}: {
-  members: LoginMember[];
-  onPick: (member: LoginMember) => void;
-}) {
+/** Matches MIN_QUERY_LENGTH in the action; repeated here to explain the copy. */
+const MIN_QUERY_LENGTH = 2;
+
+/** Long enough to stop searching on every keystroke, short enough to feel live. */
+const DEBOUNCE_MS = 200;
+
+export function MemberPicker({ onPick }: { onPick: (member: LoginCandidate) => void }) {
   const [query, setQuery] = useState("");
+  /*
+   * The answer is stored WITH the question it answers. Deriving what to show
+   * from that comparison means nothing has to be cleared when the query
+   * changes — an old result simply stops matching, and stale names never flash
+   * under a search that has moved on.
+   */
+  const [found, setFound] = useState<{ query: string; members: LoginCandidate[] } | null>(null);
+  const [, startTransition] = useTransition();
 
-  const visible = useMemo(
-    () => members.filter((member) => matchesName(member.name, query)),
-    [members, query],
-  );
+  const trimmed = query.trim();
+  const tooShort = trimmed.length < MIN_QUERY_LENGTH;
+  const settled = !tooShort && found?.query === trimmed;
+  const results = settled ? found.members : [];
 
-  if (members.length === 0) {
-    return (
-      <div className="bg-surface rounded-card shadow-card p-5.5">
-        <h2 className="text-ink-muted text-md mb-3.5 font-semibold">Qui êtes-vous&nbsp;?</h2>
-        <p className="text-ink-soft text-base">
-          Aucun membre n&apos;est encore enregistré. Un responsable de caisse doit créer le premier
-          compte.
-        </p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (tooShort) return;
+
+    const timer = setTimeout(() => {
+      startTransition(async () => {
+        setFound({ query: trimmed, members: await searchMembersForLogin(trimmed) });
+      });
+    }, DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [trimmed, tooShort]);
 
   return (
     <div className="bg-surface rounded-card shadow-card p-5.5">
@@ -54,33 +66,26 @@ export function MemberPicker({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
-            /*
-             * Once the search has narrowed to a single person, Enter picks
-             * them: on a keyboard that turns signing in into one typed word.
-             */
-            if (event.key === "Enter" && visible.length === 1) {
+            /* One name left: Enter takes it, so a keyboard needs no mouse. */
+            if (event.key === "Enter" && results.length === 1) {
               event.preventDefault();
-              onPick(visible[0]);
+              onPick(results[0]);
             }
           }}
-          placeholder="Rechercher votre nom"
+          placeholder="Tapez les premières lettres de votre nom"
           aria-label="Rechercher votre nom"
           /*
            * Deliberately not autofocused: on a phone that throws up the
-           * keyboard and hides the very list most people came to tap.
+           * keyboard before anyone has read the screen.
            */
           autoComplete="off"
           className="border-line rounded-field bg-surface text-ink placeholder:text-ink-soft w-full border py-2.75 pr-3.5 pl-10.5 text-base"
         />
       </div>
 
-      {visible.length === 0 ? (
-        <p className="text-ink-soft px-2.5 py-3 text-base">
-          Aucun nom ne correspond à «&nbsp;{query.trim()}&nbsp;».
-        </p>
-      ) : (
+      {results.length > 0 ? (
         <ul className="flex flex-col gap-0.5">
-          {visible.map((member) => (
+          {results.map((member) => (
             <li key={member.id}>
               <button
                 type="button"
@@ -89,20 +94,28 @@ export function MemberPicker({
               >
                 <Avatar name={member.name} colorIndex={member.avatarColorIndex} />
                 <span className="text-md min-w-0 flex-1 font-semibold">{member.name}</span>
-                {member.isAdmin && (
-                  <span className="bg-accent-bg text-accent-ink rounded-pill shrink-0 px-2.25 py-1 text-[0.6875rem] font-semibold">
-                    Responsable
-                  </span>
-                )}
+                {/*
+                 * No "Responsable" badge here any more. Who holds the till is
+                 * not something a login screen owes a stranger.
+                 */}
               </button>
             </li>
           ))}
         </ul>
+      ) : (
+        <p className="text-ink-soft px-2.5 py-3 text-base">
+          {tooShort
+            ? "Tapez au moins deux lettres de votre prénom ou de votre nom."
+            : settled
+              ? `Aucun nom ne correspond à « ${trimmed} ».`
+              : "Recherche…"}
+        </p>
       )}
 
-      {/* The list shrinks silently for anyone who cannot see it. */}
+      {/* The list changes under someone who cannot see it. */}
       <p className="sr-only" aria-live="polite">
-        {visible.length} membre{visible.length > 1 ? "s" : ""} dans la liste
+        {results.length} nom{results.length > 1 ? "s" : ""} proposé
+        {results.length > 1 ? "s" : ""}
       </p>
     </div>
   );
