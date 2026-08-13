@@ -67,8 +67,34 @@ Generate the two secrets with `openssl rand -base64 32`.
 > `PIN_PEPPER` is load-bearing: it is mixed into every PIN before hashing and never reaches the
 > database. Changing or losing it invalidates every existing PIN.
 
-The seed prints the demo codes it created. They are development-only — the seed refuses to run
-with `NODE_ENV=production`.
+### Signing in
+
+There is no registration screen: an account is created for you, never by you. On a seeded
+database, pick a name and type its code.
+
+| Who                                 | Code     | Lands on                  |
+| ----------------------------------- | -------- | ------------------------- |
+| **Bernard Lefèvre**, Nathalie Petit | `480215` | the till — they manage it |
+| Everyone else (the seven others)    | `7391`   | their own slate           |
+
+A till manager's code is six digits and a member's is four, because a manager's opens every
+member's record. The seed prints these on every run.
+
+These accounts are **development-only**: the seed wipes the database and refuses to run with
+`NODE_ENV=production`.
+
+### Or start from an empty club
+
+Skip `pnpm db:seed` and create a single real manager instead — the same command a live
+deployment uses:
+
+```bash
+pnpm bootstrap --name "Prénom Nom"
+```
+
+It prints a six-digit code once, and refuses to run again once a manager exists. Adding
+everybody else is then done from the till. This is the only way into a fresh database, and
+[`docs/deployment.md`](docs/deployment.md) covers it for the real thing.
 
 ## Scripts
 
