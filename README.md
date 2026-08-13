@@ -31,7 +31,8 @@ they owe, till managers record purchases and payments.
 - Manage member records: create, edit, set a per-member cap, promote to till manager.
 - Send a reminder, logged in the member's history.
 - Print the ledger or export it as CSV.
-- Every till action is attributed to a named manager and written to an audit log.
+- Every till action is attributed to a named manager: entries record who made them and,
+  if voided, who voided them.
 
 ## Stack
 

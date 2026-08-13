@@ -33,12 +33,24 @@ export type LoginResult =
 /** Identifies the device behind the request, for lockout purposes. */
 async function deviceFingerprint(): Promise<string> {
   const headerList = await headers();
+
   /*
-   * Behind a host the real address arrives in x-forwarded-for; the first
-   * entry is the client, the rest being the proxy chain.
+   * The LAST entry of x-forwarded-for, not the first.
+   *
+   * Proxies append to this header, so the leftmost value is whatever the
+   * client sent — including a value it invented. Reading it, as this did,
+   * handed the lockout key to the attacker: a fresh X-Forwarded-For on every
+   * request produced a fresh device, and the failure counter never moved.
+   *
+   * The rightmost entry is the one the nearest proxy wrote itself, which is
+   * the least forgeable value available here. It is still only a hint — a
+   * deployment with no proxy in front sees nothing at all — which is why the
+   * lockout no longer relies on it alone (see checkLockout).
    */
-  const forwarded = headerList.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const ip = forwarded || headerList.get("x-real-ip") || "unknown";
+  const chain = headerList.get("x-forwarded-for")?.split(",") ?? [];
+  const nearest = chain.at(-1)?.trim();
+
+  const ip = nearest || headerList.get("x-real-ip")?.trim() || "unknown";
   return hashIp(ip);
 }
 
@@ -86,7 +98,7 @@ export async function logIn(memberId: string, pin: string): Promise<LoginResult>
 
   const headerList = await headers();
   await recordAttempt(member.id, ipHash, true);
-  await clearAttempts(member.id, ipHash);
+  await clearAttempts(member.id);
   await createSession(member.id, headerList.get("user-agent"));
 
   /*
