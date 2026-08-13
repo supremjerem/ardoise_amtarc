@@ -40,10 +40,21 @@ export async function updateDefaultCap(amount: string): Promise<ActionResult> {
   if (cents === null) return { ok: false, message: "Plafond invalide. Exemple : 25" };
   if (cents > MAX_AMOUNT_CENTS) return { ok: false, message: "Ce plafond paraît trop élevé." };
 
+  /*
+   * Insert-or-update, not update.
+   *
+   * No migration creates the settings row — the development seed does, and a
+   * freshly migrated production database therefore has none. A bare UPDATE
+   * would match nothing and report success, and the club would set its cap,
+   * see the confirmation, and find the old figure still there on reload.
+   */
   await db
-    .update(settings)
-    .set({ defaultCapCents: cents, updatedAt: new Date() })
-    .where(eq(settings.id, 1));
+    .insert(settings)
+    .values({ id: 1, defaultCapCents: cents })
+    .onConflictDoUpdate({
+      target: settings.id,
+      set: { defaultCapCents: cents, updatedAt: new Date() },
+    });
 
   revalidatePath("/caisse/reglages");
   revalidatePath("/caisse");

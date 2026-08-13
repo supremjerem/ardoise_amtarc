@@ -22,7 +22,8 @@ const eslintConfig = defineConfig([
   },
   {
     // Seed and scripts are console programs: printing is their interface.
-    files: ["src/db/seed.ts", "scripts/**"],
+    // The bootstrap especially — it prints a code that exists nowhere else.
+    files: ["src/db/seed.ts", "src/db/bootstrap.ts", "src/db/migrate.ts", "scripts/**"],
     rules: { "no-console": "off" },
   },
   globalIgnores([

@@ -47,6 +47,8 @@ Structural decisions are recorded in [`docs/adr/`](docs/adr/) — notably
 [why money is stored as integer cents](docs/adr/0002-money-as-integer-cents.md) and
 [why nothing is ever hard-deleted](docs/adr/0005-void-and-archive-never-delete.md).
 
+Putting it in front of a real club: [`docs/deployment.md`](docs/deployment.md).
+
 ## Getting started
 
 Requirements: Node 24+, pnpm, Docker (for the local database).
@@ -70,21 +72,22 @@ with `NODE_ENV=production`.
 
 ## Scripts
 
-| Command              | What it does                              |
-| -------------------- | ----------------------------------------- |
-| `pnpm dev`           | Development server                        |
-| `pnpm build`         | Production build                          |
-| `pnpm test`          | Unit tests                                |
-| `pnpm test:coverage` | Unit tests with coverage                  |
-| `pnpm test:e2e`      | End-to-end tests, against a real build    |
-| `pnpm test:e2e:ui`   | The same, in Playwright's inspector       |
-| `pnpm typecheck`     | TypeScript, no emit                       |
-| `pnpm lint`          | ESLint                                    |
-| `pnpm format`        | Prettier, write                           |
-| `pnpm db:generate`   | Generate a migration from the schema      |
-| `pnpm db:migrate`    | Apply pending migrations                  |
-| `pnpm db:seed`       | Reset and reseed the development database |
-| `pnpm db:studio`     | Browse the database                       |
+| Command              | What it does                                |
+| -------------------- | ------------------------------------------- |
+| `pnpm dev`           | Development server                          |
+| `pnpm build`         | Production build                            |
+| `pnpm test`          | Unit tests                                  |
+| `pnpm test:coverage` | Unit tests with coverage                    |
+| `pnpm test:e2e`      | End-to-end tests, against a real build      |
+| `pnpm test:e2e:ui`   | The same, in Playwright's inspector         |
+| `pnpm typecheck`     | TypeScript, no emit                         |
+| `pnpm lint`          | ESLint                                      |
+| `pnpm format`        | Prettier, write                             |
+| `pnpm db:generate`   | Generate a migration from the schema        |
+| `pnpm db:migrate`    | Apply pending migrations                    |
+| `pnpm db:seed`       | Reset and reseed the development database   |
+| `pnpm bootstrap`     | Create the first till manager on a new club |
+| `pnpm db:studio`     | Browse the database                         |
 
 ## Architecture
 
@@ -122,7 +125,7 @@ is directly unit-testable and survives a change of stack.
 - [x] Ledger: printable page and CSV export
 - [x] Finishing: installable PWA, large-text toggle, accessibility pass
 - [x] End-to-end tests: Playwright suite wired into CI
-- [ ] Deployment: managed Postgres in the EU, first admin bootstrap script
+- [x] Deployment: container, managed Postgres in the EU, first-manager bootstrap
 
 ## Design reference
 

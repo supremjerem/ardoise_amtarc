@@ -74,6 +74,17 @@ test.describe("guards", () => {
     }
   });
 
+  test("the health check answers without a session", async ({ request }) => {
+    /*
+     * Public on purpose: redirected to the login screen it would report the
+     * app healthy from a 307, which says nothing about the database.
+     */
+    const response = await request.get("/sante");
+
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({ status: "ok" });
+  });
+
   test("a member cannot reach the till", async ({ page }) => {
     await signIn(page, MEMBER, MEMBER_PIN);
 
