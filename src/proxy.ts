@@ -13,8 +13,14 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const SESSION_COOKIE = "ardoise_session";
 
-/** Paths reachable without being signed in. */
-const PUBLIC_PATHS = ["/connexion"];
+/**
+ * Paths reachable without being signed in.
+ *
+ * `/sante` is here because a health check must get a real answer: redirected
+ * to the login screen it would report the app healthy from a 307, which says
+ * nothing about whether the database is reachable.
+ */
+const PUBLIC_PATHS = ["/connexion", "/sante"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
