@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { cloneElement, useEffect, useId, useRef } from "react";
 
 /*
  * The shell every till dialog sits in.
@@ -124,12 +124,31 @@ export function Modal({
 /* Shared form furniture                                               */
 /* ------------------------------------------------------------------ */
 
-export function Field({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * A labelled field.
+ *
+ * The label is tied to the control by id rather than by wrapping it. A
+ * wrapping <label> takes its name from everything inside, and for a <select>
+ * that includes the chosen option — the member selector announced itself as
+ * "Membre Choisir un membre…" instead of "Membre". Text inputs happen to
+ * escape this, which is exactly how it went unnoticed.
+ */
+export function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactElement<{ id?: string }>;
+}) {
+  const id = useId();
+
   return (
-    <label className="mb-3.5 block">
-      <span className="text-ink-soft text-label mb-1.5 block font-semibold">{label}</span>
-      {children}
-    </label>
+    <div className="mb-3.5">
+      <label htmlFor={id} className="text-ink-soft text-label mb-1.5 block font-semibold">
+        {label}
+      </label>
+      {cloneElement(children, { id })}
+    </div>
   );
 }
 

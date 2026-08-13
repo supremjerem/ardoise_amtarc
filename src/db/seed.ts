@@ -16,13 +16,11 @@ import { members, settings, tariffs, transactions } from "@/db/schema";
 import { env } from "@/env";
 import { hashPin } from "@/lib/pin";
 
+import { ADMIN_PIN, MEMBER_PIN } from "./demo-codes";
+
 if (env.NODE_ENV === "production") {
   throw new Error("The demo seed must never run in production.");
 }
-
-/* Demo PINs — six digits for till managers, four for members. */
-const ADMIN_PIN = "480215";
-const MEMBER_PIN = "7391";
 
 type DemoMember = {
   name: string;

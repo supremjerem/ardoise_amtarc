@@ -76,6 +76,8 @@ with `NODE_ENV=production`.
 | `pnpm build`         | Production build                          |
 | `pnpm test`          | Unit tests                                |
 | `pnpm test:coverage` | Unit tests with coverage                  |
+| `pnpm test:e2e`      | End-to-end tests, against a real build    |
+| `pnpm test:e2e:ui`   | The same, in Playwright's inspector       |
 | `pnpm typecheck`     | TypeScript, no emit                       |
 | `pnpm lint`          | ESLint                                    |
 | `pnpm format`        | Prettier, write                           |
@@ -94,6 +96,7 @@ src/
   components/  UI components
   styles/      design tokens
   proxy.ts     optimistic cookie check (was middleware.ts before Next 16)
+e2e/           end-to-end tests, driving a real build against a real database
 ```
 
 Two rules the codebase depends on:
@@ -118,7 +121,7 @@ is directly unit-testable and survives a change of stack.
 - [x] Settings: default cap, quick-price tariffs, till managers
 - [x] Ledger: printable page and CSV export
 - [x] Finishing: installable PWA, large-text toggle, accessibility pass
-- [ ] End-to-end tests: Playwright suite wired into CI
+- [x] End-to-end tests: Playwright suite wired into CI
 - [ ] Deployment: managed Postgres in the EU, first admin bootstrap script
 
 ## Design reference

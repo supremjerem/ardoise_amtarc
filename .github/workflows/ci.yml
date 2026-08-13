@@ -71,3 +71,39 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      # The browser binary is ~100 MB, so it is cached. Keyed on the lockfile:
+      # the browser version is pinned by the Playwright version, and the
+      # lockfile is what changes when that does.
+      - name: Cache the browser
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install the browser
+        run: pnpm exec playwright install --with-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+
+      # System libraries are outside the cached directory.
+      - name: Install browser system dependencies
+        run: pnpm exec playwright install-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+
+      # The end-to-end suite signs in with the demo accounts and asserts on
+      # exact balances, so it needs the seed in place before it starts.
+      - name: Seed the test database
+        run: pnpm db:seed
+
+      - name: End-to-end tests
+        run: pnpm test:e2e
+
+      # Only useful when something failed; the trace is how you find out why.
+      - name: Upload the Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && failure() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
