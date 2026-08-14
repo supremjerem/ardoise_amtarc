@@ -2,27 +2,25 @@
 
 import { useState } from "react";
 
-import type { LoginMember } from "@/lib/members";
+import type { LoginCandidate } from "@/app/actions/auth";
 
 import { MemberPicker } from "./member-picker";
 import { PinStep } from "./pin-step";
 
 /*
- * Signing in, in two steps: pick your name, then type your code.
- *
- * No identifier to remember and no keyboard to fight with — the whole point
+ * Signing in, in two steps: type a couple of letters of your name, then your
+ * code. No identifier to remember and no password to invent — the whole point
  * for an audience that mostly signs in on a phone, standing at the bar.
  *
  * The state machine lives on the client so the two steps swap instantly. It
- * grants nothing: authentication happens server-side, in the `logIn` action.
+ * grants nothing: names are searched server-side and the code is checked by
+ * the `logIn` action.
  */
 
-export function LoginFlow({ members }: { members: LoginMember[] }) {
-  const [selected, setSelected] = useState<LoginMember | null>(null);
+export function LoginFlow() {
+  const [selected, setSelected] = useState<LoginCandidate | null>(null);
 
-  if (!selected) {
-    return <MemberPicker members={members} onPick={setSelected} />;
-  }
+  if (!selected) return <MemberPicker onPick={setSelected} />;
 
   return (
     <PinStep

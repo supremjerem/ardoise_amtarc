@@ -38,6 +38,8 @@ export async function signIn(page: Page, name: string, pin: string): Promise<voi
   await page.goto("/connexion");
 
   await page.getByLabel("Rechercher votre nom").fill(name.split(" ")[0]);
+  /* The names are fetched from the server as you type. */
+  await expect(page.getByRole("button", { name })).toBeVisible();
   await page.getByRole("button", { name }).click();
 
   await expect(page.getByText(/Entrez votre code/)).toBeVisible();
