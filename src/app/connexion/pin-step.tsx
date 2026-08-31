@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { logIn } from "@/app/actions/auth";
+import { logIn, type LoginCandidate } from "@/app/actions/auth";
 import { Avatar } from "@/components/avatar";
-import type { LoginMember } from "@/lib/members";
 
 /*
  * Step 2 of signing in: the code.
@@ -17,7 +16,7 @@ import type { LoginMember } from "@/lib/members";
 /** Keys of the pad, in reading order. `null` is the gap left of the zero. */
 const PAD_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", null, "0"] as const;
 
-export function PinStep({ member, onBack }: { member: LoginMember; onBack: () => void }) {
+export function PinStep({ member, onBack }: { member: LoginCandidate; onBack: () => void }) {
   const router = useRouter();
   /* Four digits for a member, six for a till manager — decided server-side. */
   const pinLength = member.pinLength;

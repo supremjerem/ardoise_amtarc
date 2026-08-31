@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { LargeTextToggle } from "@/components/large-text-toggle";
-import { listMembersForLogin } from "@/lib/members";
 import { readCurrentMember } from "@/lib/session";
 
 import { LoginFlow } from "./login-flow";
@@ -27,8 +26,6 @@ export default async function Page() {
   const signedIn = await readCurrentMember();
   if (signedIn) redirect(signedIn.isAdmin ? "/caisse" : "/moi");
 
-  const members = await listMembersForLogin();
-
   return (
     <main id="contenu" className="flex min-h-full w-full max-w-110 flex-col px-5 pb-10">
       <header className="px-1 pt-14 pb-7 text-center">
@@ -38,7 +35,7 @@ export default async function Page() {
         <h1 className="font-display mt-1.5 text-2xl font-semibold">L&apos;ardoise du club</h1>
       </header>
 
-      <LoginFlow members={members} />
+      <LoginFlow />
 
       {/*
        * Reachable before signing in on purpose: someone who needs bigger text

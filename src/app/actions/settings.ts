@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { settings, tariffs } from "@/db/schema";
 import type { ActionResult } from "@/lib/action-result";
+import { recordAudit } from "@/lib/audit";
 import { requireAdminAction } from "@/lib/auth";
 import { MAX_AMOUNT_CENTS, parseMoney } from "@/lib/money";
 
@@ -34,7 +35,7 @@ export type TariffInput = z.input<typeof tariffInput>;
  * not a club-wide reset that would silently move everyone's alert threshold.
  */
 export async function updateDefaultCap(amount: string): Promise<ActionResult> {
-  await requireAdminAction();
+  const manager = await requireAdminAction();
 
   const cents = parseMoney(amount);
   if (cents === null) return { ok: false, message: "Plafond invalide. Exemple : 25" };
@@ -56,6 +57,13 @@ export async function updateDefaultCap(amount: string): Promise<ActionResult> {
       set: { defaultCapCents: cents, updatedAt: new Date() },
     });
 
+  await recordAudit({
+    actorId: manager.id,
+    action: "settings.update",
+    entity: "settings",
+    payload: { defaultCapCents: cents },
+  });
+
   revalidatePath("/caisse/reglages");
   revalidatePath("/caisse");
 
@@ -64,7 +72,7 @@ export async function updateDefaultCap(amount: string): Promise<ActionResult> {
 
 /** Adds a quick-price button, at the end of the row. */
 export async function createTariff(input: TariffInput): Promise<ActionResult> {
-  await requireAdminAction();
+  const manager = await requireAdminAction();
 
   const parsed = tariffInput.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message };
@@ -84,6 +92,13 @@ export async function createTariff(input: TariffInput): Promise<ActionResult> {
     sortOrder: (highest ?? -1) + 1,
   });
 
+  await recordAudit({
+    actorId: manager.id,
+    action: "tariff.create",
+    entity: "tariff",
+    payload: { label: parsed.data.label, amountCents },
+  });
+
   revalidateTariffs();
 
   return { ok: true, message: `« ${parsed.data.label} » a été ajouté.` };
@@ -91,7 +106,7 @@ export async function createTariff(input: TariffInput): Promise<ActionResult> {
 
 /** Renames a quick-price button or changes its amount. */
 export async function updateTariff(id: string, input: TariffInput): Promise<ActionResult> {
-  await requireAdminAction();
+  const manager = await requireAdminAction();
 
   const parsedId = tariffId.safeParse(id);
   if (!parsedId.success) return { ok: false, message: parsedId.error.issues[0].message };
@@ -118,6 +133,14 @@ export async function updateTariff(id: string, input: TariffInput): Promise<Acti
     .set({ label: parsed.data.label, amountCents })
     .where(eq(tariffs.id, existing.id));
 
+  await recordAudit({
+    actorId: manager.id,
+    action: "tariff.update",
+    entity: "tariff",
+    entityId: existing.id,
+    payload: { label: parsed.data.label, amountCents },
+  });
+
   revalidateTariffs();
 
   return { ok: true, message: `« ${parsed.data.label} » a été modifié.` };
@@ -132,7 +155,7 @@ export async function updateTariff(id: string, input: TariffInput): Promise<Acti
  * changed today.
  */
 export async function retireTariff(id: string): Promise<ActionResult> {
-  await requireAdminAction();
+  const manager = await requireAdminAction();
 
   const parsedId = tariffId.safeParse(id);
   if (!parsedId.success) return { ok: false, message: parsedId.error.issues[0].message };
@@ -146,6 +169,14 @@ export async function retireTariff(id: string): Promise<ActionResult> {
   if (!existing) return { ok: false, message: "Tarif introuvable." };
 
   await db.update(tariffs).set({ isActive: false }).where(eq(tariffs.id, existing.id));
+
+  await recordAudit({
+    actorId: manager.id,
+    action: "tariff.retire",
+    entity: "tariff",
+    entityId: existing.id,
+    payload: { label: existing.label },
+  });
 
   revalidateTariffs();
 

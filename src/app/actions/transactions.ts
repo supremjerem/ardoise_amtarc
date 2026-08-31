@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { members, transactions } from "@/db/schema";
 import type { ActionResult } from "@/lib/action-result";
+import { recordAudit } from "@/lib/audit";
 import { requireAdminAction } from "@/lib/auth";
 import { MAX_AMOUNT_CENTS, parseMoney } from "@/lib/money";
 
@@ -86,6 +87,14 @@ export async function recordTransaction(input: {
     createdBy: manager.id,
   });
 
+  await recordAudit({
+    actorId: manager.id,
+    action: `transaction.${parsed.data.kind}`,
+    entity: "transaction",
+    entityId: member.id,
+    payload: { member: member.name, amountCents, note: parsed.data.note?.trim() || null },
+  });
+
   revalidateTill(member.id);
 
   return {
@@ -126,6 +135,14 @@ export async function sendReminder(targetMemberId: string): Promise<ActionResult
     createdBy: manager.id,
   });
 
+  await recordAudit({
+    actorId: manager.id,
+    action: "transaction.reminder",
+    entity: "transaction",
+    entityId: member.id,
+    payload: { member: member.name },
+  });
+
   revalidateTill(member.id);
 
   return { ok: true, message: `Rappel enregistré pour ${member.name}.` };
@@ -156,6 +173,14 @@ export async function voidTransaction(transactionId: string): Promise<ActionResu
     .update(transactions)
     .set({ voidedAt: new Date(), voidedBy: manager.id })
     .where(eq(transactions.id, entry.id));
+
+  await recordAudit({
+    actorId: manager.id,
+    action: "transaction.void",
+    entity: "transaction",
+    entityId: entry.id,
+    payload: { member: entry.memberId },
+  });
 
   revalidateTill(entry.memberId);
 

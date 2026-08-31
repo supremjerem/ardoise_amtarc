@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/db";
 import { members } from "@/db/schema";
+import { listMembersForLogin } from "@/lib/members";
+import { matchesName } from "@/lib/search";
 import { verifyPin } from "@/lib/pin";
 import {
   checkLockout,
@@ -30,15 +32,79 @@ import { createSession, destroySession, purgeExpiredSessions } from "@/lib/sessi
 export type LoginResult =
   { ok: true; isAdmin: boolean } | { ok: false; message: string; locked?: boolean };
 
+/** What the login screen needs about a member it is offering. */
+export type LoginCandidate = {
+  id: string;
+  name: string;
+  avatarColorIndex: number;
+  pinLength: number;
+};
+
+/** Nothing is offered until this much has been typed. */
+const MIN_QUERY_LENGTH = 2;
+
+/** A search that matches half the club helps nobody find themselves. */
+const MAX_RESULTS = 8;
+
+/**
+ * Finds the members whose name matches what has been typed.
+ *
+ * A read, and yet an action: the login screen has to call it from the browser,
+ * and it must remain reachable without a session.
+ *
+ * It exists so the page can stop shipping the club's roster. It used to render
+ * every member's name, id and manager badge into HTML served to anyone, which
+ * published the membership list and handed an attacker their targets. Now the
+ * names live on the server and only a handful come back, for someone who
+ * already knows roughly what they are looking for.
+ *
+ * This raises the cost of enumeration; it does not make it impossible. Anyone
+ * willing to sweep two-letter prefixes can still rebuild the list. What it
+ * stops is the roster being one anonymous request away.
+ */
+export async function searchMembersForLogin(query: string): Promise<LoginCandidate[]> {
+  if (typeof query !== "string" || query.trim().length < MIN_QUERY_LENGTH) return [];
+
+  const candidates = await listMembersForLogin();
+
+  return candidates
+    .filter((member) => matchesName(member.name, query))
+    .slice(0, MAX_RESULTS)
+    .map(({ id, name, avatarColorIndex, pinLength }) => ({
+      id,
+      name,
+      avatarColorIndex,
+      /*
+       * Deliberately still returned: the keypad has to know how many digits to
+       * collect. It does reveal that this member manages the till — but only
+       * to somebody who already typed their name, rather than to every visitor
+       * at once, which is the difference this change is about.
+       */
+      pinLength,
+    }));
+}
+
 /** Identifies the device behind the request, for lockout purposes. */
 async function deviceFingerprint(): Promise<string> {
   const headerList = await headers();
+
   /*
-   * Behind a host the real address arrives in x-forwarded-for; the first
-   * entry is the client, the rest being the proxy chain.
+   * The LAST entry of x-forwarded-for, not the first.
+   *
+   * Proxies append to this header, so the leftmost value is whatever the
+   * client sent — including a value it invented. Reading it, as this did,
+   * handed the lockout key to the attacker: a fresh X-Forwarded-For on every
+   * request produced a fresh device, and the failure counter never moved.
+   *
+   * The rightmost entry is the one the nearest proxy wrote itself, which is
+   * the least forgeable value available here. It is still only a hint — a
+   * deployment with no proxy in front sees nothing at all — which is why the
+   * lockout no longer relies on it alone (see checkLockout).
    */
-  const forwarded = headerList.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const ip = forwarded || headerList.get("x-real-ip") || "unknown";
+  const chain = headerList.get("x-forwarded-for")?.split(",") ?? [];
+  const nearest = chain.at(-1)?.trim();
+
+  const ip = nearest || headerList.get("x-real-ip")?.trim() || "unknown";
   return hashIp(ip);
 }
 
@@ -86,7 +152,7 @@ export async function logIn(memberId: string, pin: string): Promise<LoginResult>
 
   const headerList = await headers();
   await recordAttempt(member.id, ipHash, true);
-  await clearAttempts(member.id, ipHash);
+  await clearAttempts(member.id);
   await createSession(member.id, headerList.get("user-agent"));
 
   /*
