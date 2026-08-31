@@ -1,0 +1,66 @@
+# Production stack — deploy to the VPS, NOT used for local development
+# (local dev uses docker-compose.yml, which only runs Postgres).
+#
+# Server layout: lives in ~/apps/live/ardoise-amtarc/ next to a .env file
+# (never committed) that supplies the variables referenced below. Traefik
+# already runs in ~/apps/tools/traefik/ and owns the external `web` network.
+#
+# Usage on the server:
+#   docker compose -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# The image is built and pushed to GHCR by .github/workflows/docker-publish.yml
+# on every push to main. Set IMAGE_TAG in the server .env to pin a specific
+# build (defaults to latest).
+
+services:
+  web:
+    image: ghcr.io/supremjerem/ardoise-amtarc:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    networks:
+      - web
+      - ardoise-amtarc-internal
+    environment:
+      DATABASE_URL: postgresql://ardoise:${POSTGRES_PASSWORD}@postgres:5432/ardoise
+      PIN_PEPPER: ${PIN_PEPPER}
+      IP_HASH_SECRET: ${IP_HASH_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # Required: web sits on both the external `web` network (Traefik) and
+      # ardoise-amtarc-internal (the postgres network) — without this,
+      # Traefik's docker provider can pick the internal-network IP, which it
+      # cannot reach, and every request hangs until it 504s.
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.ardoise-amtarc.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.ardoise-amtarc.entrypoints=websecure"
+      - "traefik.http.routers.ardoise-amtarc.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ardoise-amtarc.loadbalancer.server.port=3000"
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks:
+      - ardoise-amtarc-internal
+    environment:
+      POSTGRES_USER: ardoise
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ardoise
+    volumes:
+      - ardoise_amtarc_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ardoise -d ardoise"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  web:
+    external: true
+  ardoise-amtarc-internal:
+    driver: bridge
+
+volumes:
+  ardoise_amtarc_db_data:
