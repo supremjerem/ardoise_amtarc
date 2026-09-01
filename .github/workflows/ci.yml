@@ -101,7 +101,7 @@ jobs:
 
       # Only useful when something failed; the trace is how you find out why.
       - name: Upload the Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() && failure() }}
         with:
           name: playwright-report
