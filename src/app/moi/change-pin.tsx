@@ -129,9 +129,7 @@ function ChangePinModal({ pinLength, onClose }: { pinLength: number; onClose: ()
   if (success) {
     return (
       <Modal title="Code modifié" onClose={onClose} width="narrow">
-        <p className="text-ink-soft mb-5.5 text-sm">
-          Votre nouveau code est actif dès maintenant.
-        </p>
+        <p className="text-ink-soft mb-5.5 text-sm">Votre nouveau code est actif dès maintenant.</p>
         <button
           type="button"
           onClick={onClose}
