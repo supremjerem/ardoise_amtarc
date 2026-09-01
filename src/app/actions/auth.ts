@@ -2,13 +2,16 @@
 
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db";
 import { members } from "@/db/schema";
+import { recordAudit } from "@/lib/audit";
+import { requireMemberAction } from "@/lib/auth";
 import { listMembersForLogin } from "@/lib/members";
 import { matchesName } from "@/lib/search";
-import { verifyPin } from "@/lib/pin";
+import { hashPin, validatePin, verifyPin } from "@/lib/pin";
 import {
   checkLockout,
   clearAttempts,
@@ -17,10 +20,15 @@ import {
   purgeOldAttempts,
   recordAttempt,
 } from "@/lib/rate-limit";
-import { createSession, destroySession, purgeExpiredSessions } from "@/lib/session";
+import {
+  createSession,
+  destroyMemberSessions,
+  destroySession,
+  purgeExpiredSessions,
+} from "@/lib/session";
 
 /*
- * Sign in and sign out.
+ * Sign in, sign out, and changing one's own code.
  *
  * The PIN never leaves the server except to be compared against a hash, and
  * appears in no log.
@@ -169,4 +177,107 @@ export async function logIn(memberId: string, pin: string): Promise<LoginResult>
 export async function logOut(): Promise<void> {
   await destroySession();
   redirect("/connexion");
+}
+
+export type ChangePinResult =
+  { ok: true; message: string } | { ok: false; message: string; locked?: boolean };
+
+/**
+ * Checks a code against a member's own, through the same lockout as a login:
+ * a year-long session left open on an unlocked phone must not be enough, on
+ * its own, for whoever picks it up to brute-force their way to a code they
+ * do not know. Returns null on a match, a failure to report otherwise.
+ */
+async function verifyOwnPin(
+  member: { id: string; pinHash: string },
+  pin: string,
+): Promise<ChangePinResult | null> {
+  const ipHash = await deviceFingerprint();
+
+  const lockout = await checkLockout(member.id, ipHash);
+  if (lockout.locked) {
+    return {
+      ok: false,
+      locked: true,
+      message: `Trop d'essais. Réessayez dans ${formatWait(lockout.secondsRemaining)}.`,
+    };
+  }
+
+  const correct = await verifyPin(pin, member.pinHash);
+
+  if (!correct) {
+    await recordAttempt(member.id, ipHash, false);
+
+    const after = await checkLockout(member.id, ipHash);
+    if (after.locked) {
+      return {
+        ok: false,
+        locked: true,
+        message: `Trop d'essais. Réessayez dans ${formatWait(after.secondsRemaining)}.`,
+      };
+    }
+
+    return { ok: false, message: "Code actuel incorrect." };
+  }
+
+  await recordAttempt(member.id, ipHash, true);
+  await clearAttempts(member.id);
+  return null;
+}
+
+/**
+ * Confirms the signed-in member's current code, before the interface offers
+ * them a new one — telling them the old one was wrong before asking them to
+ * also pick and confirm a new one would be a poor trade for one round trip.
+ */
+export async function checkCurrentPin(pin: string): Promise<ChangePinResult> {
+  const member = await requireMemberAction();
+  const failure = await verifyOwnPin(member, pin);
+  return failure ?? { ok: true, message: "" };
+}
+
+/**
+ * Lets a signed-in member set their own code — the self-service counterpart
+ * to a manager resetting it for them from the till. Re-checks the current
+ * code rather than trusting the interface already did: nothing reaches this
+ * far on the strength of a client-side claim.
+ */
+export async function changeMyPin(currentPin: string, newPin: string): Promise<ChangePinResult> {
+  const member = await requireMemberAction();
+
+  const failure = await verifyOwnPin(member, currentPin);
+  if (failure) return failure;
+
+  const pinCheck = validatePin(newPin, member.isAdmin);
+  if (!pinCheck.ok) return { ok: false, message: pinCheck.message };
+
+  if (newPin === currentPin) {
+    return { ok: false, message: "Choisissez un code différent de l'actuel." };
+  }
+
+  await db
+    .update(members)
+    .set({ pinHash: await hashPin(newPin), updatedAt: new Date() })
+    .where(eq(members.id, member.id));
+
+  /*
+   * Every session closes, this one included — the same rule a manager's reset
+   * follows. A fresh one is opened immediately so the member is not asked to
+   * sign back in with the code they just chose.
+   */
+  await destroyMemberSessions(member.id);
+  const headerList = await headers();
+  await createSession(member.id, headerList.get("user-agent"));
+
+  await recordAudit({
+    actorId: member.id,
+    action: "member.pin-change-self",
+    entity: "member",
+    entityId: member.id,
+  });
+
+  revalidatePath("/moi");
+  revalidatePath("/caisse");
+
+  return { ok: true, message: "Code modifié." };
 }

@@ -7,8 +7,10 @@ import { LargeTextToggle } from "@/components/large-text-toggle";
 import { requireMember } from "@/lib/auth";
 import { calculateBalance } from "@/lib/balance";
 import { readMemberHistory } from "@/lib/ledger";
+import { requiredPinLength } from "@/lib/pin-length";
 
 import { BalanceCard, CapAlert } from "./balance-card";
+import { ChangePinButton } from "./change-pin";
 import { History } from "./history";
 
 export const metadata: Metadata = {
@@ -56,6 +58,8 @@ export default async function Page() {
               Vue caisse
             </Link>
           )}
+
+          <ChangePinButton pinLength={requiredPinLength(member.isAdmin)} />
 
           <form action={logOut}>
             <button type="submit" className="text-ink-soft text-label px-1.5 py-2.25 font-semibold">

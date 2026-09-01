@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { logIn, type LoginCandidate } from "@/app/actions/auth";
 import { Avatar } from "@/components/avatar";
+import { PinPad } from "@/components/pin-pad";
 
 /*
  * Step 2 of signing in: the code.
@@ -12,9 +13,6 @@ import { Avatar } from "@/components/avatar";
  * The pad decides nothing. The code is checked by the `logIn` Server Action,
  * and both the lockout and the session are the server's business.
  */
-
-/** Keys of the pad, in reading order. `null` is the gap left of the zero. */
-const PAD_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", null, "0"] as const;
 
 export function PinStep({ member, onBack }: { member: LoginCandidate; onBack: () => void }) {
   const router = useRouter();
@@ -72,25 +70,6 @@ export function PinStep({ member, onBack }: { member: LoginCandidate; onBack: ()
     setError("");
   }, [busy]);
 
-  /* A physical keyboard is the fastest way in on a desktop — let it work. */
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key >= "0" && event.key <= "9") {
-        press(event.key);
-      } else if (event.key === "Backspace") {
-        backspace();
-      } else if (event.key === "Escape") {
-        onBack();
-      } else {
-        return;
-      }
-      event.preventDefault();
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [press, backspace, onBack]);
-
   return (
     <div className="bg-surface rounded-card shadow-card flex flex-col items-center px-5.5 py-7">
       <button
@@ -108,60 +87,16 @@ export function PinStep({ member, onBack }: { member: LoginCandidate; onBack: ()
         Entrez votre code à {pinLength} chiffres
       </p>
 
-      <div
-        key={attempt}
-        className={`mb-6.5 flex gap-3.5 ${error ? "animate-shake" : ""}`}
-        aria-hidden="true"
-      >
-        {Array.from({ length: pinLength }, (_, index) => (
-          <span
-            key={index}
-            className={`size-3.5 rounded-full transition-colors ${
-              index < pin.length ? "bg-ink" : "bg-line"
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Spoken to a screen reader, which cannot see the dots above. */}
-      <p className="sr-only" aria-live="polite">
-        {pin.length} chiffre{pin.length > 1 ? "s" : ""} sur {pinLength}
-      </p>
-
-      {error && (
-        <p role="alert" className="text-debt -mt-2.5 mb-4 text-sm font-semibold">
-          {error}
-        </p>
-      )}
-
-      <div className="grid grid-cols-3 gap-3">
-        {PAD_KEYS.map((key, index) =>
-          key === null ? (
-            <span key={`gap-${index}`} />
-          ) : (
-            <button
-              key={key}
-              type="button"
-              onClick={() => press(key)}
-              disabled={busy}
-              aria-describedby="pin-instructions"
-              className="border-key-border bg-surface text-ink hover:bg-hover active:bg-track size-16 rounded-full border text-xl font-semibold transition-colors disabled:opacity-50"
-            >
-              {key}
-            </button>
-          ),
-        )}
-
-        <button
-          type="button"
-          onClick={backspace}
-          disabled={busy}
-          className="text-ink-soft size-16 rounded-full text-lg disabled:opacity-50"
-        >
-          <span aria-hidden="true">⌫</span>
-          <span className="sr-only">Effacer le dernier chiffre</span>
-        </button>
-      </div>
+      <PinPad
+        pin={pin}
+        pinLength={pinLength}
+        error={error}
+        attempt={attempt}
+        busy={busy}
+        onPress={press}
+        onBackspace={backspace}
+        onEscape={onBack}
+      />
     </div>
   );
 }

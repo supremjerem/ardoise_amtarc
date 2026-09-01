@@ -1,11 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-import { alert, MEMBER, signInAsMember } from "./helpers";
+import { alert, MEMBER, MEMBER_PIN, reseed, signIn, signInAsMember, typePin } from "./helpers";
 
 /*
  * What a member sees of their own account, and the two things the interface
  * must never get wrong about it: the figure, and who else can read it.
  */
+
+test.beforeEach(() => {
+  reseed();
+});
 
 test("a member sees their balance, their cap and the alert above it", async ({ page }) => {
   await signInAsMember(page);
@@ -55,4 +59,56 @@ test("signing out ends the session for good", async ({ page }) => {
   /* Going back must not resurrect the page from the browser cache. */
   await page.goto("/moi");
   await expect(page).toHaveURL(/\/connexion$/);
+});
+
+test.describe("changing your own code", () => {
+  const NEW_PIN = "8462";
+
+  test("a member sets a new code themselves, and signs back in with it", async ({ page }) => {
+    await signInAsMember(page);
+
+    await page.getByRole("button", { name: "Changer mon code" }).click();
+    await expect(page.getByText("Entrez votre code actuel")).toBeVisible();
+    await typePin(page, MEMBER_PIN);
+
+    await expect(page.getByText("Choisissez un nouveau code")).toBeVisible();
+    await typePin(page, NEW_PIN);
+
+    await expect(page.getByText("Retapez le nouveau code")).toBeVisible();
+    await typePin(page, NEW_PIN);
+
+    await expect(page.getByRole("heading", { name: "Code modifié" })).toBeVisible();
+    await page.getByRole("button", { name: "Fermer" }).click();
+
+    await page.getByRole("button", { name: "Déconnexion" }).click();
+    await signIn(page, MEMBER, NEW_PIN);
+    await expect(page).toHaveURL(/\/moi$/);
+  });
+
+  test("the wrong current code is refused, and nothing changes", async ({ page }) => {
+    await signInAsMember(page);
+
+    await page.getByRole("button", { name: "Changer mon code" }).click();
+    await typePin(page, "0000");
+
+    await expect(page.getByRole("dialog").getByRole("alert")).toHaveText("Code actuel incorrect.");
+    await expect(page.getByText("Entrez votre code actuel")).toBeVisible();
+
+    await page.getByRole("button", { name: "← Annuler" }).click();
+    await expect(page.getByRole("heading", { name: "Changer mon code" })).toBeHidden();
+  });
+
+  test("a mismatched confirmation is caught before anything is saved", async ({ page }) => {
+    await signInAsMember(page);
+
+    await page.getByRole("button", { name: "Changer mon code" }).click();
+    await typePin(page, MEMBER_PIN);
+    await typePin(page, NEW_PIN);
+    await typePin(page, "9999");
+
+    await expect(page.getByRole("dialog").getByRole("alert")).toHaveText(
+      "Les deux codes ne correspondent pas.",
+    );
+    await expect(page.getByText("Entrez votre code actuel")).toBeVisible();
+  });
 });
